@@ -149,6 +149,7 @@ abstract public class AbstractListHarvesting extends AbstractHarvesting
         final String identifier;
         /** <br> Prefix part of the pair */
         final String prefix;
+        final String datestamp;
 
         /**
          * <br> Create an identifier and prefix pair
@@ -159,6 +160,19 @@ abstract public class AbstractListHarvesting extends AbstractHarvesting
         IdPrefix (String identifier, String prefix){
             this.identifier = identifier;
             this.prefix     = prefix;
+            this.datestamp  = null;
+        }
+        
+        /**
+         * <br> Create an identifier and prefix pair
+         *
+         * @param identifier the identifier part of the pair
+         * @param prefix the prefix part of the pair
+         */
+        IdPrefix (String identifier, String prefix, String datestamp){
+            this.identifier = identifier;
+            this.prefix     = prefix;
+            this.datestamp  = datestamp;
         }
 
         /**

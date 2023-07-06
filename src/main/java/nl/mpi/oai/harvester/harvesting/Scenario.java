@@ -25,6 +25,7 @@ import nl.mpi.oai.harvester.utils.DocumentSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -156,23 +157,35 @@ public class Scenario {
          */
         while(!harvesting.fullyParsed()) {
             try {
-
                 if (provider.isExclusive()) {
                     exclusiveLock.writeLock().lock();
                 } else {
                     exclusiveLock.readLock().lock();
                 }
 
-                Metadata record = (Metadata) harvesting.parseResponse();
-
+                Metadata record = null;
+                try
+                {
+                    record = (Metadata) ((IdentifierListHarvesting)harvesting).parseResponseIfNewer(actionSequence);
+                }
+                catch (IOException e)
+                {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                catch (RuntimeException re)
+                {
+                    record = null;
+                }
+                
                 if (record == null) {
                     // something went wrong, skip the record
                 } else {
                     // apply the action sequence to the record
                     actionSequence.runActions(record);
+                    record.close();
                 }
                 
-                record.close();
             } finally {
                 if (provider.isExclusive()) {
                     exclusiveLock.writeLock().unlock();

@@ -709,9 +709,9 @@ public class Configuration {
     public boolean isIncremental() {
         String s = settings.get(KnownOptions.INCREMENTAL.toString());
         boolean r = (s == null) ? false : Boolean.valueOf(s);
-        if (r)
-            logger.warn("Incremental harvesting cannot be enabled ... needs to be finished!");
-        return false;
+//        if (r)
+//            logger.warn("Incremental harvesting cannot be enabled ... needs to be finished!");
+        return r;
     }
     
     /**

@@ -20,11 +20,17 @@
 package nl.mpi.oai.harvester.harvesting;
 
 import nl.mpi.oai.harvester.Provider;
+import nl.mpi.oai.harvester.action.Action;
+import nl.mpi.oai.harvester.action.ActionSequence;
+import nl.mpi.oai.harvester.action.SaveAction;
+import nl.mpi.oai.harvester.control.ResourcePool;
 import nl.mpi.oai.harvester.cycle.Endpoint;
 import nl.mpi.oai.harvester.metadata.MetadataFactory;
 import nl.mpi.oai.harvester.utils.DocumentSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.joda.time.DateTime;
+import org.joda.time.format.DateTimeFormat;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
@@ -33,8 +39,16 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.TransformerException;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpressionException;
+
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -175,7 +189,7 @@ public class IdentifierListHarvesting extends ListHarvesting
                failure, stop the work on the current prefix.
              */
             nodeList = (NodeList)provider.xpath.evaluate(
-                    "//*[starts-with(local-name(),'identifier') "
+                    "//*[(starts-with(local-name(),'identifier') or  starts-with(local-name(),'datestamp')) "
                             + "and parent::*[local-name()='header' "
                             + "and not(@status='deleted')]]/text()",
                     document.getDocument(), XPathConstants.NODESET);
@@ -189,10 +203,11 @@ public class IdentifierListHarvesting extends ListHarvesting
         }
         
         // add the identifier and prefix targets into the array
-        for (int j = 0; j < nodeList.getLength(); j++) {
+        for (int j = 0; j < nodeList.getLength(); j+=2) {
             String identifier = nodeList.item(j).getNodeValue();
+            String datestamp = nodeList.item(j+1).getNodeValue();
             IdPrefix pair = new IdPrefix (identifier, 
-                    prefixes.get(pIndex));
+                    prefixes.get(pIndex), datestamp);
 
             /* Try to insert the pair in the list. No problem if it is already
                there.
@@ -244,5 +259,77 @@ public class IdentifierListHarvesting extends ListHarvesting
                 }
             }
         }
+    }
+    
+    public Object parseResponseIfNewer(ActionSequence actions) throws IOException {
+        
+        // check for protocol errors
+        if (targets == null){
+            throw new HarvestingException();
+        }
+        if (tIndex >= targets.size()) {
+            throw new HarvestingException();
+        }
+
+        // the targets are in place and tIndex points to an element in the list
+        IdPrefix pair = targets.get(tIndex);
+        tIndex++;
+        
+        ResourcePool<Action> firstSaveAction = getFirstSaveAction(actions);
+        SaveAction saveAction = ((SaveAction)firstSaveAction.get());
+        Path pathToFile = saveAction.chooseLocation(this.provider.getName(), pair.identifier);
+        firstSaveAction.release(saveAction);
+        org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy'-'MM'-'dd'T'HH':'mm':'ssZ");
+        DateTime dt = formatter.parseDateTime(pair.datestamp);
+        try { 
+            BasicFileAttributes attr = Files.readAttributes(pathToFile, BasicFileAttributes.class);
+            FileTime ft = attr.lastModifiedTime();
+            if (ft.toMillis() > dt.getMillis()) {
+                // Already downloaded file.   
+                // Skip it and be happy
+                logger.debug("file "+pathToFile.toAbsolutePath().toString()+" already exists and is newer than the one that would be downloaded");
+                return (null);
+            }
+        }
+        catch (IOException ioe) {
+            // doesn't exist?    continue, be happy
+            System.out.println(pathToFile.toAbsolutePath());
+        }
+        
+        // get the record for the identifier and prefix
+        RecordHarvesting p = new RecordHarvesting(oaiFactory, provider,
+                pair.prefix, pair.identifier, metadataFactory);
+
+        if (! p.request()) {
+            // something went wrong
+            throw new RuntimeException();
+        } else {
+            DocumentSource document = p.getResponse();
+            if (document == null) {
+                throw new RuntimeException();
+            } else {
+                if (!p.processResponse(document)) {
+                    throw new RuntimeException();
+                } else {
+                    return p.parseResponse();
+                }
+            }
+        }
+    }
+
+    private ResourcePool<Action> getFirstSaveAction(ActionSequence actions)
+    {
+        ResourcePool<Action> result = null;
+        for (ResourcePool<Action> actpool : actions.getActions())
+        {
+            Action act = actpool.get();
+            if (act instanceof SaveAction)
+            {
+                result = actpool;
+            }
+            actpool.release(act);
+            if (result != null)  break;
+        }
+        return(result);
     }
 }

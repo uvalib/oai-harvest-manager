@@ -65,12 +65,19 @@ public class SaveGroupedAction extends SaveAction implements Action {
 
     @Override
     protected Path chooseLocation(Metadata metadata) throws IOException {
-	Provider prov = metadata.getOrigin();
-	if (!locations.containsKey(prov)) {
-	    OutputDirectory provDir = dir.makeSubdirectory(Util.toFileFormat(prov.getName()));
-	    locations.put(prov, provDir);
-	}
-	return locations.get(prov).placeNewFile(Util.toFileFormat(metadata.getId(),suffix));
+        Provider prov = metadata.getOrigin();
+        if (!locations.containsKey(prov)) {
+            OutputDirectory provDir = dir.makeSubdirectory(Util.toFileFormat(prov.getName()));
+            locations.put(prov, provDir);
+        }
+        String provName = prov.getName();
+        return chooseLocation(provName, metadata.getId());
+    }
+
+    @Override
+    public Path chooseLocation(String provName, String id) throws IOException {
+        OutputDirectory provDir = dir.makeSubdirectory(Util.toFileFormat(provName));
+        return provDir.placeNewFile(Util.toFileFormat(id, suffix));
     }
 
     @Override

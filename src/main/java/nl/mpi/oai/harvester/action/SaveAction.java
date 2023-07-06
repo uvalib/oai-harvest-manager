@@ -147,7 +147,18 @@ public class SaveAction implements Action {
      * @throws IOException something went wrong when creating the new file
      */
     protected Path chooseLocation(Metadata metadata) throws IOException {
-        return dir.placeNewFile(Util.toFileFormat(metadata.getId(),suffix));
+        return chooseLocation("", metadata.getId());
+    }
+    
+    /**
+     * Simply choose location to save in.
+     *
+     * @param metadata metadata record
+     * @return path to new file in suitable location
+     * @throws IOException something went wrong when creating the new file
+     */
+    public Path chooseLocation(String provName, String id) throws IOException {
+        return dir.placeNewFile(Util.toFileFormat(id, suffix));
     }
 
     @Override

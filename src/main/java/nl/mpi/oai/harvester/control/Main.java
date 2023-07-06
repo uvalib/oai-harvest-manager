@@ -121,7 +121,9 @@ public class Main {
 
 	// Ensure the timeout setting is honored.
 	config.applyTimeoutSetting();
-
+	
+	SSLFix.execute();
+	
 	runHarvesting(config);
         
         logger.info("Goodbye from the main OAI Harvest Manager!");
