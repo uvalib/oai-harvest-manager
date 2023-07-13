@@ -1,0 +1,114 @@
+<!-- This is the configuration for CLARIN harvesting. -->
+<config>
+
+  <!-- ### configuration settings ### -->
+  <settings>
+    <!-- Working directory. -->
+    <workdir>oai/workspace</workdir>
+
+    <!-- Maximum number of attempts per record before giving up. -->
+    <max-retry-count>2</max-retry-count>
+
+    <!-- Sequence of delays between retries of a record (seconds). 
+    If the sequence size is smaller than the number of retries the last value will be reused-->
+    <retry-delay>10 20</retry-delay>
+
+    <!-- Maximum number of concurrent harvester threads -->
+    <max-jobs>4</max-jobs>
+
+    <!-- Number of resources placed in the resource pool. -->
+    <resource-pool-size>4</resource-pool-size>
+
+    <!-- Default timeout (for connection and reading) for a single
+    http request in seconds. If unspecified, will be INFINITE.  -->
+    <timeout>6000</timeout>
+
+    <!-- File used to log harvesting times. -->
+    <state-file>state.xml</state-file>
+
+    <!-- If this parameter is true, use incremental harvesting. For that to
+    work, state-file must be defined, the file must exist, and the provider
+    in question must have been harvested previously. If any of these conditions
+    is not fulfilled, this setting has no effect.-->
+    <incremental>true</incremental>
+    
+    <!-- Scenario to use:
+         - ListRecords will retrieve batches of records from the providers, the batch size is determined by the provider
+         - ListIdentifiers will first retrieve all record identifiers and then retrieve records one by one
+    -->
+    <scenario>ListIdentifiers</scenario>
+  </settings>
+
+  <!-- ### output directories (referenced in the action section) ### -->
+  <directories>
+    <!-- When the attribute 'max-files' is non-zero, subdirectories
+         will be created to ensure no directory has more than that
+         number of files. -->
+    <dir path="oai-pmh" id="oai" max-files="0"/>
+    <dir path="oai-ead" id="ead" max-files="0"/>
+    <dir path="solr" id="solr" max-files="0"/>
+    <dir path="cmdi" id="cmdi" max-files="0"/>
+  </directories>
+  
+  
+  <!-- ### actions to take on metadata formats (in order of preference) ### -->
+  <actions>
+    <format match="prefix" value="oai_ead">
+<!--  <action type="transform" file="https://raw.githubusercontent.com/clarin-eric/oai-harvest-manager/master/src/main/resources/filter.xsl"/> -->
+<!--  <action type="save" dir="oai" group-by-provider="true" suffix=".xml"/>  -->   
+<!--  <action type="transform" file="https://github.com/clarin-eric/oai-harvest-config/raw/develop/addOAISetName.xsl" cache=".oai-cache"/>  -->
+      <action type="split"/>
+      <action type="strip"/>
+      <action type="save" dir="ead" group-by-provider="true" suffix=".xml"/>
+    </format>
+  </actions>
+  
+  <!-- ### list of providers ### -->
+  <providers>
+    <!--<provider url="http://archief.meertens.knaw.nl/oaiprovider/"/>
+    <provider url="http://www.elra.info/elrac/elra_catalogue.xml" static="true"
+	      name="European Language Resources Association"/>
+    <provider url="http://catalog.paradisec.org.au/oai/item"
+	      name="Pacific And Regional Archive for Digital Sources in Endangered Cultures (PARADISEC)"/>
+    <provider url="https://b2share.eudat.eu/oai2d/" name="B2SHARE">
+      <set>Linguistics</set>
+    </provider>
+    <provider url="http://clarino.uib.no/oai"/>
+    <provider url="https://repo.clarino.uib.no/oai/request"/>
+    <provider url="http://catalog.paradisec.org.au/oai/item"
+      name="Pacific And Regional Archive for Digital Sources in Endangered Cultures (PARADISEC)"/>
+    <provider url="https://lindat.mff.cuni.cz/repository/oai/request"/>
+    <provider url="https://arche.acdh.oeaw.ac.at/oai"/>
+    <provider url="https://clarinportulan.net/oaipmh/"/>
+    <provider url="https://www.meertens.knaw.nl/flat/oai2"/>
+    <provider url="http://www.meertens.knaw.nl/oai/oai_server.php"/>
+    <provider url="http://clarino.uib.no/oai"/>
+    <provider url="https://lindat.mff.cuni.cz/repository/oai/request"/>
+    <provider url="https://oai.cedifor.de/"/>
+    <provider url="https://www.meertens.knaw.nl/flat/oai2"/>
+-->
+    <!--->provider url="https://oai.datacite.org/oai">
+      <!-/-<filter>Subject and Keywords = Humanities - Languages and literature (6.2) or Humanities - Other humanities (6.5))</filter>-/->
+      <filter xmlns:dc="http://purl.org/dc/elements/1.1/">.//dc:subject[contains(.,'(6.2)') or contains(.,'(6.5)')]</filter>
+      <!-/-<set>DELFT.UU</set>-/->
+    </provider>-->
+    <provider url="https://archives.vmfa.museum/oai" name="VFMA" >
+       <filter>.//url[contains(.,'resources/37')]</filter>
+ 	</provider>    
+    <provider url="https://as-oai.lib.odu.edu" name="ODU" /> 
+    <provider url="https://archives.library.vcu.edu/oai" name="VCU" /> 
+    <provider url="https://aspace.lib.vt.edu:8082" name="VT" />  
+    <provider url="https://aspace.lib.jmu.edu/oai" name="JMU" />  
+    <provider url="http://alexlibraryva.libraryhost.com:8082" name="ALEX" />  
+    <provider url="https://archives.mountvernon.org/oai" name="MV" />  
+    <provider url="https://aspace.umw.edu/oai" name="MW" />  
+    <provider url="https://aspace.gmu.edu/oai" name="GMU" />
+    <provider url="https://archives-oai.lib.virginia.edu" name="UVA" /> 
+    <provider url="https://archives.longwood.edu/oai" name="LONG" /> 
+    <provider url="https://archives.richmond.edu/oai" name="RICH" />  
+    <!--    Bad URL connection refused  <provider url="http://archivesspace.wlu.edu:8082/oai" name="WLU" />  -->
+    <!--<provider url="https://arche.acdh.oeaw.ac.at/oaipmh/" timeout="300">
+      <set>clarin-vlo</set>
+    </provider>-->
+  </providers>
+</config>
