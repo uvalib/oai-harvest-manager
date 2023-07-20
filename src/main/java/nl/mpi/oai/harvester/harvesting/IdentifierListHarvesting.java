@@ -261,6 +261,40 @@ public class IdentifierListHarvesting extends ListHarvesting
         }
     }
     
+    public Object parseResponseIfNewer(Path pathToFile) throws IOException {
+        
+        // check for protocol errors
+        if (targets == null){
+            throw new HarvestingException();
+        }
+        if (tIndex >= targets.size()) {
+            throw new HarvestingException();
+        }
+
+        // the targets are in place and tIndex points to an element in the list
+        IdPrefix pair = targets.get(tIndex);
+        
+        org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy'-'MM'-'dd'T'HH':'mm':'ssZ");
+        DateTime dt = formatter.parseDateTime(pair.datestamp);
+        try { 
+            BasicFileAttributes attr = Files.readAttributes(pathToFile, BasicFileAttributes.class);
+            FileTime ft = attr.lastModifiedTime();
+            if (ft.toMillis() > dt.getMillis()) {
+                // Already downloaded file.   
+                // Skip it and be happy
+                logger.debug("file "+pathToFile.toAbsolutePath().toString()+" already exists and is newer than the one that would be downloaded");
+                tIndex++;
+                return (null);
+            }
+        }
+        catch (IOException ioe) {
+            // doesn't exist?    continue, be happy
+            System.out.println(pathToFile.toAbsolutePath());
+        }
+        
+        return parseResponse();
+    }
+    
     public Object parseResponseIfNewer(ActionSequence actions) throws IOException {
         
         // check for protocol errors
@@ -273,63 +307,13 @@ public class IdentifierListHarvesting extends ListHarvesting
 
         // the targets are in place and tIndex points to an element in the list
         IdPrefix pair = targets.get(tIndex);
-        tIndex++;
         
-        ResourcePool<Action> firstSaveAction = getFirstSaveAction(actions);
+        ResourcePool<Action> firstSaveAction = Scenario.getFirstSaveAction(actions);
         SaveAction saveAction = ((SaveAction)firstSaveAction.get());
         Path pathToFile = saveAction.chooseLocation(this.provider.getName(), pair.identifier);
         firstSaveAction.release(saveAction);
-        org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy'-'MM'-'dd'T'HH':'mm':'ssZ");
-        DateTime dt = formatter.parseDateTime(pair.datestamp);
-        try { 
-            BasicFileAttributes attr = Files.readAttributes(pathToFile, BasicFileAttributes.class);
-            FileTime ft = attr.lastModifiedTime();
-            if (ft.toMillis() > dt.getMillis()) {
-                // Already downloaded file.   
-                // Skip it and be happy
-                logger.debug("file "+pathToFile.toAbsolutePath().toString()+" already exists and is newer than the one that would be downloaded");
-                return (null);
-            }
-        }
-        catch (IOException ioe) {
-            // doesn't exist?    continue, be happy
-            System.out.println(pathToFile.toAbsolutePath());
-        }
         
-        // get the record for the identifier and prefix
-        RecordHarvesting p = new RecordHarvesting(oaiFactory, provider,
-                pair.prefix, pair.identifier, metadataFactory);
-
-        if (! p.request()) {
-            // something went wrong
-            throw new RuntimeException();
-        } else {
-            DocumentSource document = p.getResponse();
-            if (document == null) {
-                throw new RuntimeException();
-            } else {
-                if (!p.processResponse(document)) {
-                    throw new RuntimeException();
-                } else {
-                    return p.parseResponse();
-                }
-            }
-        }
+        return (parseResponseIfNewer(pathToFile));
     }
 
-    private ResourcePool<Action> getFirstSaveAction(ActionSequence actions)
-    {
-        ResourcePool<Action> result = null;
-        for (ResourcePool<Action> actpool : actions.getActions())
-        {
-            Action act = actpool.get();
-            if (act instanceof SaveAction)
-            {
-                result = actpool;
-            }
-            actpool.release(act);
-            if (result != null)  break;
-        }
-        return(result);
-    }
 }

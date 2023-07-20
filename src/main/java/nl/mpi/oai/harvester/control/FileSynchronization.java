@@ -20,7 +20,10 @@ package nl.mpi.oai.harvester.control;
 
 import ORG.oclc.oai.harvester2.verb.ListIdentifiers;
 import nl.mpi.oai.harvester.Provider;
+import nl.mpi.oai.harvester.harvesting.Scenario;
 import nl.mpi.oai.harvester.utils.Statistic;
+
+import org.apache.commons.io.FileSystem;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -30,6 +33,7 @@ import javax.xml.xpath.XPathConstants;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -53,16 +57,16 @@ public final class FileSynchronization {
 
     private static final ConcurrentHashMap<Provider, Statistic> statistic = new ConcurrentHashMap<>();
 
-    public static void execute(Provider provider) {
+    public static void execute(Provider provider, Path pathToDir) {
 
         switch (provider.getDeletionMode()){
 
             case NO:
-                runSynchronizationForNoDeletionMode(provider);
+                runSynchronizationForNoDeletionMode(provider, pathToDir);
                 break;
             case TRANSIENT:
             case PERSISTENT:
-                runSynchronizationForTransientDeletionMode(provider);
+                runSynchronizationForTransientDeletionMode(provider, pathToDir);
                 break;
             default:
                 break;
@@ -70,21 +74,35 @@ public final class FileSynchronization {
        saveStatistics(provider);
     }
 
-    private static void runSynchronizationForTransientDeletionMode(final Provider provider){
+//    private static void runSynchronizationForTransientDeletionMode(final Provider provider, Path pathToDir){
+//        String dir = Main.config.getWorkingDirectory()+ CMDI;
+//        File file = new File(dir + Util.toFileFormat(provider.getName())+"_remove.txt");
+//
+//        String firstDirToRemove = Main.config.getWorkingDirectory() + CMDI + Util.toFileFormat(provider.getName())+"/";
+//        String scenedDirToRemove = Main.config.getWorkingDirectory() + CMDI1_1 + Util.toFileFormat(provider.getName())+"/";
+//        String thirdDirToRemove = Main.config.getWorkingDirectory() + CMDI1_2 + Util.toFileFormat(provider.getName())+"/";
+//
+//        delete(provider, file, firstDirToRemove);
+//        delete(provider, file, scenedDirToRemove);
+//        delete(provider, file, thirdDirToRemove);
+//        FileUtils.deleteQuietly(file);
+//    }
+
+    private static void runSynchronizationForTransientDeletionMode(final Provider provider, Path pathToDir){
         String dir = Main.config.getWorkingDirectory()+ CMDI;
         File file = new File(dir + Util.toFileFormat(provider.getName())+"_remove.txt");
 
-        String firstDirToRemove = Main.config.getWorkingDirectory() + CMDI + Util.toFileFormat(provider.getName())+"/";
-        String scenedDirToRemove = Main.config.getWorkingDirectory() + CMDI1_1 + Util.toFileFormat(provider.getName())+"/";
-        String thirdDirToRemove = Main.config.getWorkingDirectory() + CMDI1_2 + Util.toFileFormat(provider.getName())+"/";
+//        String firstDirToRemove = Main.config.getWorkingDirectory() + CMDI + Util.toFileFormat(provider.getName())+"/";
+//        String scenedDirToRemove = Main.config.getWorkingDirectory() + CMDI1_1 + Util.toFileFormat(provider.getName())+"/";
+//        String thirdDirToRemove = Main.config.getWorkingDirectory() + CMDI1_2 + Util.toFileFormat(provider.getName())+"/";
 
-        delete(provider, file, firstDirToRemove);
-        delete(provider, file, scenedDirToRemove);
-        delete(provider, file, thirdDirToRemove);
+        delete(provider, file, pathToDir.toString());
+//        delete(provider, file, scenedDirToRemove);
+//        delete(provider, file, thirdDirToRemove);
         FileUtils.deleteQuietly(file);
     }
 
-    private static void runSynchronizationForNoDeletionMode(final Provider provider){
+    private static void runSynchronizationForNoDeletionMode(final Provider provider, Path pathToDir){
         String dir1 = Main.config.getWorkingDirectory() + CMDI + Util.toFileFormat(provider.getName());
         String dir2 = Main.config.getWorkingDirectory() + CMDI1_2 + Util.toFileFormat(provider.getName());
         String dir3 = Main.config.getWorkingDirectory() + CMDI1_1 + Util.toFileFormat(provider.getName());
@@ -218,15 +236,17 @@ public final class FileSynchronization {
     private static void delete(final Provider provider, final File file, final String dir){
         Stream<String> fileStream = getAsStream(file);
 
+        Path dirPath = FileSystems.getDefault().getPath(dir);
         if(fileStream != null) {
             fileStream.forEach(l -> {
-                Path path = Paths.get(dir+l);
+                Path path = dirPath.resolve(l);
                 if(Files.exists(path)){
                     try {
                         Files.delete(path);
                         saveToHistoryFile(provider, path, Operation.DELETE);
+                        logger.info("Deleted file: "+path );
                     } catch (IOException e) {
-                        logger.error("Error while deleting "+path + " file: ", e);
+                        logger.error("Error while deleting file: "+path + " : ", e);
                     }
                 }
             });

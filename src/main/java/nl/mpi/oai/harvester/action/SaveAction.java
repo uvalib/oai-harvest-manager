@@ -42,9 +42,12 @@ import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 /**
@@ -77,6 +80,10 @@ public class SaveAction implements Action {
         return metadata.getDoc();
     }
 
+    public OutputDirectory getOutputDirectory() {
+        return dir;
+    }
+    
     @Override
     public boolean perform(List<Metadata> records) {
 
@@ -84,8 +91,9 @@ public class SaveAction implements Action {
             OutputStream os = null;
             XMLEventReader reader = null;
             XMLEventWriter writer = null;
+            Path path = null;
             try {
-                Path path = chooseLocation(record);
+                path = chooseLocation(record);
                 if(history){
                     FileSynchronization.saveToHistoryFile(record.getOrigin(), path, FileSynchronization.Operation.INSERT);
                     FileSynchronization.getProviderStatistic(record.getOrigin()).incRecordCount();
@@ -121,7 +129,18 @@ public class SaveAction implements Action {
                     logger.debug("saved XML stream[" + path + "]");
                 }
             } catch (TransformerException | IOException | XPathExpressionException | XMLStreamException ex) {
-                logger.error(ex);
+                Path errpath = FileSystems.getDefault().getPath(path.getParent().toString(), path.getName(path.getNameCount()-1).toString() + ".error");
+                InputStream rStream = record.getStream();
+                try
+                {
+                    Files.copy(rStream, errpath, StandardCopyOption.REPLACE_EXISTING);
+                    logger.debug("saved XML stream with errors[" + errpath + "]");
+                }
+                catch (IOException e)
+                {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
                 return false;
             } finally {
                 try {
@@ -131,7 +150,19 @@ public class SaveAction implements Action {
                         reader.close();
                     if (writer != null)
                         writer.close();
-                } catch (IOException | XMLStreamException e) {
+                } 
+                catch (IOException | XMLStreamException e) {
+                }
+                finally {
+                    if (dir.toString().endsWith("error")) {
+                        try
+                        {
+                            Files.deleteIfExists(path);
+                        }
+                        catch (IOException e)
+                        {
+                        }
+                    }
                 }
             }
         }
@@ -191,5 +222,10 @@ public class SaveAction implements Action {
         // This is a shallow copy, resulting in multiple references to a single
         // OutputDirectory, which is as intended.
         return new SaveAction(dir, suffix, offload, history);
+    }
+
+    public Path chooseLocationDir(String provName) throws IOException
+    {
+        return dir.getBase();
     }
 }

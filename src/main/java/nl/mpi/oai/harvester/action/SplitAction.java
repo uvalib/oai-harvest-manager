@@ -209,6 +209,7 @@ public class SplitAction implements Action {
                                         }
                                         if("deleted".equals(status)){
                                             FileSynchronization.saveFilesToRemove(Util.toFileFormat(id) + ".xml", record.getOrigin());
+                                            logger.info("Record ["+id+"] has status \"deleted\" flagging file for deletion");
                                         }
 
                                         writer = null;

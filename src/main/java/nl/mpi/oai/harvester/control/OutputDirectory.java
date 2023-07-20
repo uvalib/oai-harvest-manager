@@ -132,9 +132,15 @@ public class OutputDirectory {
 
     @Override
     public String toString() {
-	if (limit > 0)
-	    return base.toString() + " [limit " + limit + "]";
-	return base.toString();
+    if (limit > 0)
+        return base.toString() + " [limit " + limit + "]";
+    return base.toString();
+    }
+
+    public Path getBase() {
+    if (limit > 0)
+        throw new RuntimeException("All Your Base Are Belong To Us");
+    return base;
     }
 
     @Override

@@ -4,7 +4,7 @@
   <!-- ### configuration settings ### -->
   <settings>
     <!-- Working directory. -->
-    <workdir>oai/workspace</workdir>
+    <workdir>oai</workdir>
 
     <!-- Maximum number of attempts per record before giving up. -->
     <max-retry-count>2</max-retry-count>
@@ -44,10 +44,8 @@
     <!-- When the attribute 'max-files' is non-zero, subdirectories
          will be created to ensure no directory has more than that
          number of files. -->
-    <dir path="oai-pmh" id="oai" max-files="0"/>
-    <dir path="oai-ead" id="ead" max-files="0"/>
-    <dir path="solr" id="solr" max-files="0"/>
-    <dir path="cmdi" id="cmdi" max-files="0"/>
+    <dir path="error" id="err" max-files="0"/>
+    <dir path="ead" id="ead" max-files="0"/>
   </directories>
   
   
@@ -55,7 +53,7 @@
   <actions>
     <format match="prefix" value="oai_ead">
 <!--  <action type="transform" file="https://raw.githubusercontent.com/clarin-eric/oai-harvest-manager/master/src/main/resources/filter.xsl"/> -->
-<!--  <action type="save" dir="oai" group-by-provider="true" suffix=".xml"/>  -->   
+      <action type="save" dir="err" group-by-provider="true" suffix=".xml"/> 
 <!--  <action type="transform" file="https://github.com/clarin-eric/oai-harvest-config/raw/develop/addOAISetName.xsl" cache=".oai-cache"/>  -->
       <action type="split"/>
       <action type="strip"/>
@@ -105,7 +103,9 @@
     <provider url="https://aspace.gmu.edu/oai" name="GMU" />
     <provider url="https://archives-oai.lib.virginia.edu" name="UVA" /> 
     <provider url="https://archives.longwood.edu/oai" name="LONG" /> 
-    <provider url="https://archives.richmond.edu/oai" name="RICH" />  
+    <provider url="https://archives.lib.wvu.edu/oai" name="WVU" />
+    <provider url="https://archives.richmond.edu/oai" name="RICH" /> 
+    <provider url="http://archivespace.hsc.edu:8082" name="HSC" />
     <!--    Bad URL connection refused  <provider url="http://archivesspace.wlu.edu:8082/oai" name="WLU" />  -->
     <!--<provider url="https://arche.acdh.oeaw.ac.at/oaipmh/" timeout="300">
       <set>clarin-vlo</set>

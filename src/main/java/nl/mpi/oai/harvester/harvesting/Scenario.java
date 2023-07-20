@@ -19,7 +19,10 @@
 package nl.mpi.oai.harvester.harvesting;
 
 import nl.mpi.oai.harvester.Provider;
+import nl.mpi.oai.harvester.action.Action;
 import nl.mpi.oai.harvester.action.ActionSequence;
+import nl.mpi.oai.harvester.action.SaveAction;
+import nl.mpi.oai.harvester.control.ResourcePool;
 import nl.mpi.oai.harvester.metadata.Metadata;
 import nl.mpi.oai.harvester.utils.DocumentSource;
 import org.apache.logging.log4j.LogManager;
@@ -196,6 +199,27 @@ public class Scenario {
         }
 
         return true;
+    }
+
+    public ResourcePool<Action> getFirstSaveAction()
+    {
+        return(getFirstSaveAction(actionSequence));
+    }
+    
+    public static ResourcePool<Action> getFirstSaveAction(ActionSequence actions)
+    {
+        ResourcePool<Action> result = null;
+        for (ResourcePool<Action> actpool : actions.getActions())
+        {
+            Action act = actpool.get();
+            if (act instanceof SaveAction && !((SaveAction)act).getOutputDirectory().toString().endsWith("error"))
+            {
+                result = actpool;
+            }
+            actpool.release(act);
+            if (result != null)  break;
+        }
+        return(result);
     }
 
     /**

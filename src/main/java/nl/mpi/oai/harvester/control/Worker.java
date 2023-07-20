@@ -20,7 +20,9 @@ package nl.mpi.oai.harvester.control;
 
 import nl.mpi.oai.harvester.Provider;
 import nl.mpi.oai.harvester.StaticProvider;
+import nl.mpi.oai.harvester.action.Action;
 import nl.mpi.oai.harvester.action.ActionSequence;
+import nl.mpi.oai.harvester.action.SaveAction;
 import nl.mpi.oai.harvester.cycle.Cycle;
 import nl.mpi.oai.harvester.cycle.Endpoint;
 import nl.mpi.oai.harvester.harvesting.*;
@@ -32,6 +34,7 @@ import org.apache.logging.log4j.ThreadContext;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
@@ -208,7 +211,19 @@ class Worker implements Runnable {
                                 logger.debug("list records -> done[" + done + "]");
                             }
                             if(Main.config.isIncremental()) {
-                                FileSynchronization.execute(provider);
+                                try
+                                {
+                                    ResourcePool<Action> firstSaveAction = scenario.getFirstSaveAction();
+                                    SaveAction saveAction = ((SaveAction)firstSaveAction.get());
+                                    Path pathToDir = saveAction.chooseLocationDir(provider.getName());
+                                    firstSaveAction.release(saveAction);
+
+                                    FileSynchronization.execute(provider, pathToDir);
+                                }
+                                catch (IOException e)
+                                {
+                                    logger.error("Error getting location of provider directory for FileSynchronization.execute call");
+                                }
                             }
                         }
                     }

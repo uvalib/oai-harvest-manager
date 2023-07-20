@@ -81,6 +81,12 @@ public class SaveGroupedAction extends SaveAction implements Action {
     }
 
     @Override
+    public Path chooseLocationDir(String provName) throws IOException {
+        OutputDirectory provDir = dir.makeSubdirectory(Util.toFileFormat(provName));
+        return provDir.getBase();
+    }
+
+    @Override
     public String toString() {
 	return super.toString() + " grouped by provider";
     }
