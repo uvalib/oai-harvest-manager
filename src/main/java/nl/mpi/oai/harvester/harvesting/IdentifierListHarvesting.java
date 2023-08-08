@@ -289,7 +289,7 @@ public class IdentifierListHarvesting extends ListHarvesting
         }
         catch (IOException ioe) {
             // doesn't exist?    continue, be happy
-            System.out.println(pathToFile.toAbsolutePath());
+            System.out.println(this.provider.getName() + " : " + pathToFile.getFileName());
         }
         
         return parseResponse();

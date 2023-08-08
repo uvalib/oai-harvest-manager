@@ -115,7 +115,7 @@ public class Scenario {
     public boolean listIdentifiers(AbstractHarvesting harvesting) {
 
         DocumentSource identifiers;
-
+        System.out.println(harvesting.provider.getName() +" : Starting listIdentifiers");
         for (;;) {
             try {
 
@@ -154,11 +154,18 @@ public class Scenario {
                 }
             }
         }
-
+        if (harvesting instanceof IdentifierListHarvesting) 
+        { 
+            IdentifierListHarvesting iharvesting = (IdentifierListHarvesting)harvesting;
+            System.out.println(harvesting.provider.getName() +" : Received "+ iharvesting.targets.size() + " identifiers to harvest");
+        }
+        int num_harvested = 0;
+        int num_skipped = 0;
+        boolean timedOutTooMuch = false;
         /* Iterate over the list of pairs, for each pair, get the record it
            identifies.
          */
-        while(!harvesting.fullyParsed()) {
+        while(!harvesting.fullyParsed() && !timedOutTooMuch) {
             try {
                 if (provider.isExclusive()) {
                     exclusiveLock.writeLock().lock();
@@ -167,9 +174,14 @@ public class Scenario {
                 }
 
                 Metadata record = null;
+                Object response = null;
                 try
                 {
-                    record = (Metadata) ((IdentifierListHarvesting)harvesting).parseResponseIfNewer(actionSequence);
+                    response = ((IdentifierListHarvesting)harvesting).parseResponseIfNewer(actionSequence);
+                    if (response instanceof Metadata )
+                    {
+                        record = (Metadata) response;
+                    }
                 }
                 catch (IOException e)
                 {
@@ -181,11 +193,22 @@ public class Scenario {
                     record = null;
                 }
                 
-                if (record == null) {
-                    // something went wrong, skip the record
-                } else {
+                if (record == null && response instanceof String) 
+                {
+                    // record in filesystem is newer than the one in the archive, skip the record
+                    num_skipped++;
+                }
+                else if (record == null) {
+                    // something went wrong; skip the record
+                    if (provider.getErrors() > 3) 
+                    {
+                        timedOutTooMuch = true;
+                    }
+                } 
+                else {
                     // apply the action sequence to the record
                     actionSequence.runActions(record);
+                    num_harvested++;
                     record.close();
                 }
                 
@@ -196,6 +219,11 @@ public class Scenario {
                     exclusiveLock.readLock().unlock();
                 }
             }
+        }
+        if (harvesting instanceof IdentifierListHarvesting) 
+        { 
+            System.out.println(harvesting.provider.getName() +" : Harvested "+ num_harvested + " records");
+            System.out.println(harvesting.provider.getName() +" : Skipped "+ num_skipped + " records");
         }
 
         return true;

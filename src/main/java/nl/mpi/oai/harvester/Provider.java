@@ -75,6 +75,9 @@ public class Provider {
     /** Maximum number of retries to use when a connection fails. */
     public int maxRetryCount = 0;
 
+    /** Number of total failures */
+    public int numErrors = 0;
+
     /** Maximum number of retries to use when a connection fails. */
     public int[] retryDelays = {0};
     
@@ -231,6 +234,14 @@ public class Provider {
         return sets;
     }
 
+    public int getErrors() {
+        return numErrors;
+    }
+    
+    public int incrementErrors() {
+        return ++numErrors;
+    }
+    
     /**
      * Get the name declared by an OAI-PMH provider by making an
      * Identify request. Returns null if no name can be found.

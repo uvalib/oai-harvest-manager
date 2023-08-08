@@ -28,6 +28,8 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
+
 import nl.mpi.oai.harvester.utils.DocumentSource;
 
 /**
@@ -83,17 +85,17 @@ public final class RecordHarvesting extends AbstractHarvesting {
                 
         int i = 0;
         for (;;) {
-
+            Exception lastException = null;
             try {
                 // get metadata record from the endpoint
-                document = oaiFactory.createGetRecord(provider.oaiUrl,
-                        identifier, prefix);
+                document = oaiFactory.createGetRecord(provider.oaiUrl, identifier, prefix);
             } catch (IOException
                     | ParserConfigurationException
                     | SAXException
                     | TransformerException
                     | NoSuchFieldException e) {
                 // report
+                lastException = e;
                 logger.error("RecordHarvesting["+this+"]["+provider+"] request try["+(i+1)+"/"+provider.maxRetryCount+"] failed!");
                 logger.error(e.getMessage(), e);
             }
@@ -105,6 +107,10 @@ public final class RecordHarvesting extends AbstractHarvesting {
                         + " from endpoint " + provider.oaiUrl);
                 if (i == provider.maxRetryCount) {
                     // try another record
+                    if (lastException != null && lastException instanceof SocketTimeoutException)
+                    {
+                        provider.incrementErrors();
+                    }
                     return false;
                 } else {
                     int retryDelay = provider.getRetryDelay(i-1);

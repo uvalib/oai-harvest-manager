@@ -26,6 +26,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.TransformerException;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.nio.file.Path;
 
 /**
@@ -90,7 +91,10 @@ public class OAIFactory {
                     | ParserConfigurationException
                     | SAXException
                     | TransformerException e) {
-                e.printStackTrace();
+                if (! ( e instanceof SocketTimeoutException)) 
+                {
+                    e.printStackTrace();
+                }
                 throw(e);
             }
         } else {
