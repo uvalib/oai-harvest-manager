@@ -161,6 +161,7 @@ public class Scenario {
         }
         int num_harvested = 0;
         int num_skipped = 0;
+        int num_errors = 0;
         boolean timedOutTooMuch = false;
         /* Iterate over the list of pairs, for each pair, get the record it
            identifies.
@@ -198,12 +199,14 @@ public class Scenario {
                     // record in filesystem is newer than the one in the archive, skip the record
                     num_skipped++;
                 }
-                else if (record == null) {
+                else if (record == null)
+                {
                     // something went wrong; skip the record
                     if (provider.getErrors() > 3) 
                     {
                         timedOutTooMuch = true;
                     }
+                    num_errors++;
                 } 
                 else {
                     // apply the action sequence to the record
@@ -224,6 +227,7 @@ public class Scenario {
         { 
             System.out.println(harvesting.provider.getName() +" : Harvested "+ num_harvested + " records");
             System.out.println(harvesting.provider.getName() +" : Skipped "+ num_skipped + " records");
+            System.out.println(harvesting.provider.getName() +" : Errors in "+ num_errors + " records");
         }
 
         return true;

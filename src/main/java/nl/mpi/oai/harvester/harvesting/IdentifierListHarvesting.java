@@ -42,6 +42,7 @@ import javax.xml.xpath.XPathExpressionException;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
@@ -241,8 +242,7 @@ public class IdentifierListHarvesting extends ListHarvesting
         IdPrefix pair = targets.get(tIndex);
         tIndex++;
         // get the record for the identifier and prefix
-        RecordHarvesting p = new RecordHarvesting(oaiFactory, provider,
-                pair.prefix, pair.identifier, metadataFactory);
+        RecordHarvesting p = new RecordHarvesting(oaiFactory, provider, pair.prefix, pair.identifier, metadataFactory);
 
         if (! p.request()) {
             // something went wrong
@@ -277,19 +277,23 @@ public class IdentifierListHarvesting extends ListHarvesting
         org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy'-'MM'-'dd'T'HH':'mm':'ssZ");
         DateTime dt = formatter.parseDateTime(pair.datestamp);
         try { 
-            BasicFileAttributes attr = Files.readAttributes(pathToFile, BasicFileAttributes.class);
-            FileTime ft = attr.lastModifiedTime();
-            if (ft.toMillis() > dt.getMillis()) {
-                // Already downloaded file.   
-                // Skip it and be happy
-                logger.debug("file "+pathToFile.toAbsolutePath().toString()+" already exists and is newer than the one that would be downloaded");
-                tIndex++;
-                return (null);
+            if (Files.exists(pathToFile, new LinkOption[0]))
+            {
+                BasicFileAttributes attr = Files.readAttributes(pathToFile, BasicFileAttributes.class);
+                FileTime ft = attr.lastModifiedTime();
+                if (ft.toMillis() > dt.getMillis()) {
+                    // Already downloaded file.   
+                    // Skip it and be happy
+                    logger.debug("file "+pathToFile.toAbsolutePath().toString()+" already exists and is newer than the one that would be downloaded");
+                    tIndex++;
+                    // Ugh.    return a string rather than a Metadata object to signal an expected "failure" 
+                    return (new String("already exists"));
+                }
             }
+            System.out.println(this.provider.getName() + " : " + pathToFile.getFileName());
         }
         catch (IOException ioe) {
-            // doesn't exist?    continue, be happy
-            System.out.println(this.provider.getName() + " : " + pathToFile.getFileName());
+            throw ioe;
         }
         
         return parseResponse();
