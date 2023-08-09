@@ -138,7 +138,10 @@ public class OAIFactory {
                     | TransformerException
                     | NoSuchFieldException
                     | XMLStreamException e) {
-                e.printStackTrace();
+                if (! ( e instanceof SocketTimeoutException)) 
+                {
+                    e.printStackTrace();
+                }
                 throw(e);
             }
         } else {
@@ -188,7 +191,10 @@ public class OAIFactory {
                     | TransformerException
                     | NoSuchFieldException
                     | XMLStreamException e) {
-                e.printStackTrace();
+                if (! ( e instanceof SocketTimeoutException)) 
+                {
+                    e.printStackTrace();
+                }
                 throw(e);
             }
         } else {
@@ -231,7 +237,14 @@ public class OAIFactory {
                     | ParserConfigurationException
                     | SAXException
                     | TransformerException e) {
-                e.printStackTrace();
+                if (! ( e instanceof SocketTimeoutException)) 
+                {
+                    e.printStackTrace();
+                }
+                else
+                {
+                    System.out.println("Error: Timeout on record : "+ recordIdentifier);
+                }
                 throw(e);
             }
         } else {
@@ -277,7 +290,10 @@ public class OAIFactory {
                     | TransformerException
                     | NoSuchFieldException
                     | XMLStreamException e) {
-                e.printStackTrace();
+                if (! ( e instanceof SocketTimeoutException)) 
+                {
+                    e.printStackTrace();
+                }
                 throw(e);
             }
         } else {
@@ -327,7 +343,10 @@ public class OAIFactory {
                     | TransformerException
                     | NoSuchFieldException
                     | XMLStreamException e) {
-                e.printStackTrace();
+                if (! ( e instanceof SocketTimeoutException)) 
+                {
+                    e.printStackTrace();
+                }
                 throw(e);
             }
         } else {
