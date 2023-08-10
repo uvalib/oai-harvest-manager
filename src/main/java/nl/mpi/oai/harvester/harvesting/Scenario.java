@@ -226,8 +226,14 @@ public class Scenario {
         if (harvesting instanceof IdentifierListHarvesting) 
         { 
             System.out.println(harvesting.provider.getName() +" : Harvested "+ num_harvested + " records");
-            System.out.println(harvesting.provider.getName() +" : Skipped "+ num_skipped + " records");
-            System.out.println(harvesting.provider.getName() +" : Errors in "+ num_errors + " records");
+            if (num_skipped > 0) 
+            {
+                System.out.println(harvesting.provider.getName() +" : Skipped "+ num_skipped + " records");
+            }
+            if (num_errors > 0) 
+            {
+                System.out.println(harvesting.provider.getName() +" : Errors in "+ num_errors + " records");
+            }
         }
 
         return true;
