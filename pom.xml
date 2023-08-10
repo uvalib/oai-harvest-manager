@@ -10,7 +10,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <versionNumber>${project.version}.${buildNumber}</versionNumber>
+        <!-- <versionNumber>${project.version}.${buildNumber}</versionNumber> -->
+        <versionNumber>${project.version}</versionNumber>
     </properties>
 
     <scm>
