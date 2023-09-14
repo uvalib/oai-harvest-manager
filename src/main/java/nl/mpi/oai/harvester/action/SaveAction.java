@@ -62,6 +62,8 @@ public class SaveAction implements Action {
     protected String suffix;
     protected boolean offload;
     protected boolean history;
+    protected String find;
+    protected String replace;
 
     /**
      * Create a new save action.
@@ -69,11 +71,13 @@ public class SaveAction implements Action {
      * @param dir    output directory to save to
      * @param suffix suffix to be added to identifier to generate filename
      */
-    public SaveAction(OutputDirectory dir, String suffix, boolean offload, boolean history) {
+    public SaveAction(OutputDirectory dir, String suffix, boolean offload, boolean history, String find, String replace) {
         this.dir = dir;
         this.suffix = (suffix == null) ? "" : suffix;
         this.offload = offload;
         this.history = history;
+        this.find = find;
+        this.replace = replace;
     }
 
     public Document getDocument(Metadata metadata) {
@@ -189,7 +193,7 @@ public class SaveAction implements Action {
      * @throws IOException something went wrong when creating the new file
      */
     public Path chooseLocation(String provName, String id) throws IOException {
-        return dir.placeNewFile(Util.toFileFormat(id, suffix));
+        return dir.placeNewFile(Util.toFileFormat(mapIdtoFilename(id), suffix));
     }
 
     @Override
@@ -221,11 +225,21 @@ public class SaveAction implements Action {
     public Action clone() {
         // This is a shallow copy, resulting in multiple references to a single
         // OutputDirectory, which is as intended.
-        return new SaveAction(dir, suffix, offload, history);
+        return new SaveAction(dir, suffix, offload, history, find, replace);
     }
 
     public Path chooseLocationDir(String provName) throws IOException
     {
         return dir.getBase();
+    }
+    
+    protected String mapIdtoFilename(String id)
+    {
+        if (find != null && replace != null) 
+        {
+            String idStripped = id.replaceAll(find, replace);
+            return (idStripped);
+        }
+        return(id);
     }
 }

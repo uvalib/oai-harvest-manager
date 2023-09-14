@@ -48,8 +48,8 @@ public class SaveGroupedAction extends SaveAction implements Action {
      * @param dir output directory to save to
      * @param suffix suffix to be added to identifier to generate filename
      */
-    public SaveGroupedAction(OutputDirectory dir, String suffix, boolean offload, boolean history) {
-	super(dir, suffix, offload, history);
+    public SaveGroupedAction(OutputDirectory dir, String suffix, boolean offload, boolean history, String find, String replace) {
+	super(dir, suffix, offload, history, find, replace);
 	locations = Collections.synchronizedMap(new HashMap<>());
     }
 
@@ -58,7 +58,7 @@ public class SaveGroupedAction extends SaveAction implements Action {
      * set of subdirectories with the given action.
      */
     private SaveGroupedAction(SaveGroupedAction sga) {
-	super(sga.dir, sga.suffix, sga.offload, sga.history);
+	super(sga.dir, sga.suffix, sga.offload, sga.history, sga.find, sga.replace);
 	locations = sga.locations;
 
     }
@@ -77,7 +77,7 @@ public class SaveGroupedAction extends SaveAction implements Action {
     @Override
     public Path chooseLocation(String provName, String id) throws IOException {
         OutputDirectory provDir = dir.makeSubdirectory(Util.toFileFormat(provName));
-        return provDir.placeNewFile(Util.toFileFormat(id, suffix));
+        return provDir.placeNewFile(Util.toFileFormat(mapIdtoFilename(id), suffix));
     }
 
     @Override

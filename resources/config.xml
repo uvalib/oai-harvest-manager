@@ -56,7 +56,7 @@
       <action type="save" dir="err" group-by-provider="true" suffix=".xml"/> 
       <action type="split"/>
       <action type="strip"/>
-      <action type="save" dir="ead" group-by-provider="true" suffix=".xml"/>
+      <action type="save" dir="ead" group-by-provider="true" suffix=".xml" find=".*/(repositories/.*)" replace="$1" />
     </format>
   </actions>
   

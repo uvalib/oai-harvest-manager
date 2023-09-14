@@ -270,7 +270,8 @@ public class Configuration {
 
                         // if null defaults to false, only "true" leads to true
                         boolean offload = Boolean.parseBoolean(Util.getNodeText(xpath, "./@offload", s));
-
+                        String find = Util.getNodeText(xpath, "./@find", s);
+                        String replace = Util.getNodeText(xpath, "./@replace", s);
                         if (outputs.containsKey(outDirId)) {
                             OutputDirectory outDir = outputs.get(outDirId);
                             String group = Util.getNodeText(xpath,
@@ -278,9 +279,9 @@ public class Configuration {
                             // If the group-by-provider attribute is
                             // not defined, it defaults to true.
                             if (group != null && !Boolean.valueOf(group)) {
-                                act = new SaveAction(outDir, suffix, offload, history);
+                                act = new SaveAction(outDir, suffix, offload, history, find, replace);
                             } else {
-                                act = new SaveGroupedAction(outDir, suffix, offload, history);
+                                act = new SaveGroupedAction(outDir, suffix, offload, history, find, replace);
                             }
                         } else {
                             logger.error("Invalid output directory " + outDirId
