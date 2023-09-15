@@ -215,7 +215,7 @@ public class OAIFactory {
      * @param metadataPrefix the metadata prefix
      * @return the OAI response
      */
-    DocumentSource createGetRecord(String endpoint, String recordIdentifier, String metadataPrefix) throws
+    DocumentSource createGetRecord(String endpoint, String recordIdentifier, String metadataPrefix, int timeout) throws
             IOException,
             ParserConfigurationException,
             SAXException,
@@ -231,7 +231,7 @@ public class OAIFactory {
         if (oaiInterface == null) {
             // no object connected
             try {
-                HarvesterVerb verb = new GetRecord(endpoint, recordIdentifier, metadataPrefix);
+                HarvesterVerb verb = new GetRecord(endpoint, recordIdentifier, metadataPrefix, timeout);
                 response = verb.getDocumentSource();
             } catch (IOException
                     | ParserConfigurationException

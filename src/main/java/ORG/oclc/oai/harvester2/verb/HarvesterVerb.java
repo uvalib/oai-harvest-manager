@@ -43,6 +43,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryPoolMXBean;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Date;
@@ -302,6 +303,7 @@ public abstract class HarvesterVerb {
                 con.setConnectTimeout(timeout*1000);
                 con.setReadTimeout(timeout*1000);
             }
+            long timestart = System.currentTimeMillis();
             try {
                 responseCode = con.getResponseCode();
                 logger.debug("responseCode=" + responseCode);
@@ -309,6 +311,12 @@ public abstract class HarvesterVerb {
                 // assume it's a 503 response
                 logger.info(requestURL, e);
                 responseCode = HttpURLConnection.HTTP_UNAVAILABLE;
+            } catch(SocketTimeoutException e) {
+                long timeend = System.currentTimeMillis();
+                long elapsed = (timeend - timestart) / 1000L;
+                System.out.println("Error: Timeout ("+elapsed+" :seconds) on '"+requestURL+"'");
+                logger.error("time out exception ("+elapsed+" :seconds) '"+requestURL+"'");
+                throw e;
             } catch(Exception e) {
                 logger.error("couldn't connect to '"+requestURL+"': "+e.getMessage());
                 throw e;

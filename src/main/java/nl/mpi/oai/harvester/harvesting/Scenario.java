@@ -202,7 +202,7 @@ public class Scenario {
                 else if (record == null)
                 {
                     // something went wrong; skip the record
-                    if (provider.getErrors() > 3) 
+                    if (provider.getErrors() > 5) 
                     {
                         timedOutTooMuch = true;
                     }
@@ -236,7 +236,7 @@ public class Scenario {
             }
         }
 
-        return true;
+        return (num_errors == 0);
     }
 
     public ResourcePool<Action> getFirstSaveAction()

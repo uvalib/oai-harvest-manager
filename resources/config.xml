@@ -73,10 +73,10 @@
     <provider url="https://archives.mountvernon.org/oai" name="MV" />  
     <provider url="https://aspace.umw.edu/oai" name="MW" />  
     <provider url="https://aspace.gmu.edu/oai" name="GMU" />
-    <provider url="https://archives-oai.lib.virginia.edu" name="UVA" /> 
+    <provider url="https://archives-oai.lib.virginia.edu" name="UVA" timeout="180" /> 
     <provider url="https://archives.longwood.edu/oai" name="LONG" /> 
     <provider url="https://archives.richmond.edu/oai" name="RICH" />  
-    <provider url="https://archives.lib.wvu.edu/oai" name="WVU" timeout="120" >
+    <provider url="https://archives.lib.wvu.edu/oai" name="WVU" timeout="180" >
        <filter>.//url[contains(.,'resources/1')]</filter>
     </provider>
     <provider url="http://archivespace.hsc.edu:8082" name="HSC" />
