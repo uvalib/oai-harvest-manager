@@ -292,10 +292,12 @@ public abstract class HarvesterVerb {
         InputStream in = null;
         URL url = new URL(this.requestURL);
         HttpURLConnection con = null;
+        boolean suppressAgent = false;
         int responseCode = 0;
         do {
             con = (HttpURLConnection) url.openConnection();
-            con.setRequestProperty("User-Agent", "OAIHarvester/2.0");
+            if (!suppressAgent) 
+                con.setRequestProperty("User-Agent", "OAIHarvester/2.0");
             con.setRequestProperty("Accept-Encoding",
             "compress, gzip, identify");
             if (timeout > 0) {
@@ -325,6 +327,10 @@ public abstract class HarvesterVerb {
                 this.requestURL = con.getHeaderField("Location");
                 logger.debug("redirect to requestURL=" + this.requestURL);
                 url = new URL(this.requestURL);
+                responseCode = HttpURLConnection.HTTP_UNAVAILABLE;
+            } else if (responseCode == HttpURLConnection.HTTP_FORBIDDEN && suppressAgent == false) {
+                // if they are blocking OAI Harvesters try again without being a Harvester
+                suppressAgent = true;
                 responseCode = HttpURLConnection.HTTP_UNAVAILABLE;
             } else if (responseCode == HttpURLConnection.HTTP_UNAVAILABLE) {
                 long retrySeconds = con.getHeaderFieldInt("Retry-After", -1);
