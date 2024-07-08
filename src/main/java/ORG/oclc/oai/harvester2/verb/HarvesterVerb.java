@@ -331,6 +331,7 @@ public abstract class HarvesterVerb {
             } else if (responseCode == HttpURLConnection.HTTP_FORBIDDEN && suppressAgent == false) {
                 // if they are blocking OAI Harvesters try again without being a Harvester
                 suppressAgent = true;
+                logger.info("recieved 403 Forbidden, trying again without User-Agent");
                 responseCode = HttpURLConnection.HTTP_UNAVAILABLE;
             } else if (responseCode == HttpURLConnection.HTTP_UNAVAILABLE) {
                 long retrySeconds = con.getHeaderFieldInt("Retry-After", -1);
