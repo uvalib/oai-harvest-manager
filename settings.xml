@@ -160,16 +160,10 @@ xsd">
      -->
     <mirror>
       <id>maven-default-http-blocker</id>
-      <mirrorOf>external:http:*,!MPI,!central,!Geomajas,!releases.java.net,!shapshots.java.net,!jvnet-nexus-stag
+      <mirrorOf>external:http:*,!central,!releases.java.net,!shapshots.java.net,!jvnet-nexus-stag
 ing,!netbeans</mirrorOf>
       <name>Pseudo repository to mirror external repositories initially using HTTP.</name>
       <url>http://0.0.0.0/</url>
-    </mirror>
-    <mirror>
-      <id>broken</id>
-      <name>Broken old Repos</name>
-      <url>https://repo.myrobotlab.org/artifactory/myrobotlab/</url>
-      <mirrorOf>MPI,Geomajas,CLARIN</mirrorOf>
     </mirror>
   </mirrors>
 
