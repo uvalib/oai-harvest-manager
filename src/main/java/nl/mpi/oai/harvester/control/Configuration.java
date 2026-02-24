@@ -32,6 +32,8 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import edu.virginia.lib.oai.ValidateOrRecoverAction;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -309,6 +311,30 @@ public class Configuration {
                             act = new TransformAction(base, xslFile, cache, jobs);
                         } catch (Exception ex) {
                             logger.error(ex);
+                        }
+                    } else if ("validate-or-recover".equals(actionType)) {
+                        String outDirId = Util.getNodeText(xpath, "./@dir", s);
+                        boolean history = Boolean.parseBoolean(Util.getNodeText(xpath, "./@history", s));
+                        String suffix = Util.getNodeText(xpath, "./@suffix", s);
+
+                        // if null defaults to false, only "true" leads to true
+                        boolean offload = Boolean.parseBoolean(Util.getNodeText(xpath, "./@offload", s));
+                        String find = Util.getNodeText(xpath, "./@find", s);
+                        String replace = Util.getNodeText(xpath, "./@replace", s);
+                        if (outputs.containsKey(outDirId)) {
+                            OutputDirectory outDir = outputs.get(outDirId);
+                            String group = Util.getNodeText(xpath,
+                                    "./@group-by-provider", s);
+                            // If the group-by-provider attribute is
+                            // not defined, it defaults to true.
+                            boolean groupByProvider = true;
+                            if (group != null && !Boolean.valueOf(group)) {
+                                groupByProvider = true;
+                            }
+                            act = new ValidateOrRecoverAction(outDir, suffix, groupByProvider);
+                        } else {
+                            logger.error("Invalid output directory " + outDirId
+                                    + " specified for ValidateOrRecover action");
                         }
                     }
                     if (act != null)

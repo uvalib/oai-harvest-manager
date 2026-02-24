@@ -46,87 +46,98 @@ public class Main {
     public static Configuration config;
 
     private static void runHarvesting(Configuration config) {
-	config.log();
-        
-        ExecutorService executor = new ScheduledThreadPoolExecutor(config.getMaxJobs());
-
-	// create a CycleFactory
-	CycleFactory factory = new CycleFactory();
-	// get a cycle based on the overview file
-	File OverviewFile = new File (config.getOverviewFile());
-	Cycle cycle = factory.createCycle(OverviewFile);
-
-	for (Provider provider : config.getProviders()) {
-            // create a new worker
-	    Worker worker = new Worker(provider, config, cycle);
-            executor.execute(worker);
-	}
-        
-        executor.shutdown();
+        runHarvesting(config, null); // delegate to the new overload
     }
 
+    private static void runHarvesting(Configuration config, String providerName) {
+        config.log();
+
+        ExecutorService executor = new ScheduledThreadPoolExecutor(config.getMaxJobs());
+
+        // create a CycleFactory
+        CycleFactory factory = new CycleFactory();
+        // get a cycle based on the overview file
+        File OverviewFile = new File(config.getOverviewFile());
+        Cycle cycle = factory.createCycle(OverviewFile);
+
+        for (Provider provider : config.getProviders()) {
+            // If a provider name was specified, skip others
+            if (providerName != null && !provider.getName().equals(providerName)) {
+                continue;
+            }
+
+            // create a new worker
+            Worker worker = new Worker(provider, config, cycle);
+            executor.execute(worker);
+        }
+
+        executor.shutdown();
+    }
     public static void main(String[] args) {
         
         logger.info("Welcome to the main OAI Harvest Manager!");
         
-	String configFile = null;
+        String configFile = null;
+        String providerName = null;  // NEW: optional provider argument
 
-	// Select Saxon XSLT/XPath implementation (necessary in case there
-        // are other XSLT/XPath libraries in classpath).
+        // Select Saxon XSLT/XPath implementation
         System.setProperty("javax.xml.transform.TransformerFactory",    
             "net.sf.saxon.TransformerFactoryImpl");
         System.setProperty("javax.xml.xpath.XPathFactory",
             "net.sf.saxon.xpath.XPathFactoryImpl");
-    
-        // Some endpoints behave differently when you're not a browser, so fake it
+
         System.setProperty("http.agent",
             "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
 
-	// If the "config" parameter is specified, take it as the
-	// configuration file name.
-	for (String arg : args) {
-	    if (arg.startsWith("config=")) {
-		configFile = arg.substring(7);
-	    } else if (!arg.contains("=")) {
-		configFile = arg;
-	    }
-	}
+        // Parse arguments
+        for (String arg : args) {
+            if (arg.startsWith("config=")) {
+                configFile = arg.substring(7);
+            } else if (arg.startsWith("provider=")) {   // NEW: capture provider
+                providerName = arg.substring(9);
+            } else if (!arg.contains("=") && configFile == null) {
+                configFile = arg;
+            } else if (!arg.contains("=") && configFile != null) {   // NEW: capture provider
+                providerName = arg;
+            }
+        }
 
-	// If a configuration file name hasn't been specified in the
-	// arguments, use "resources/config.xml" by default.
-	if (configFile == null) {
-	    configFile = "resources" + sep + "config.xml";
-	}
+        if (configFile == null) {
+            configFile = "resources" + sep + "config.xml";
+        }
 
-	// Process options given on the command line (if any), then read the
-	// configuration file. 
-	config = new Configuration();
-	for (String arg : args) {
-	    if (arg.indexOf('=') > -1) {
-		String[] tmp=arg.split("=");
-		if (tmp.length == 1) {
-		    config.setOption(tmp[0], null);
-		} else if (tmp.length >= 2) {
-		    config.setOption(tmp[0], tmp[1]);
-		}
-	    }
-	}
-	try {
-	    config.readConfig(configFile);
-	} catch (ParserConfigurationException | SAXException 
-		| XPathExpressionException | IOException ex) {
-	    logger.error("Unable to read configuration file", ex);
-	    return;
-	}
+        // Process options given on the command line
+        config = new Configuration();
+        for (String arg : args) {
+            if (arg.indexOf('=') > -1) {
+                String[] tmp = arg.split("=");
+                if (tmp.length == 1) {
+                    config.setOption(tmp[0], null);
+                } else if (tmp.length >= 2) {
+                    config.setOption(tmp[0], tmp[1]);
+                }
+            }
+        }
+        try {
+            config.readConfig(configFile);
+        } catch (ParserConfigurationException | SAXException 
+            | XPathExpressionException | IOException ex) {
+            logger.error("Unable to read configuration file", ex);
+            return;
+        }
 
-	// Ensure the timeout setting is honored.
-	config.applyTimeoutSetting();
-	
-	SSLFix.execute();
-	
-	runHarvesting(config);
+        config.applyTimeoutSetting();
+        
+        SSLFix.execute();
+
+        // Pass the provider name if specified
+        if (providerName != null) {
+            runHarvesting(config, providerName);
+        } else {
+            runHarvesting(config);
+        }
         
         logger.info("Goodbye from the main OAI Harvest Manager!");
-
     }
+
 }

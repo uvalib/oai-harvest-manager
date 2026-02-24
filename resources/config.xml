@@ -53,7 +53,8 @@
   <actions>
     <format match="prefix" value="oai_ead">
 <!--  <action type="transform" file="https://raw.githubusercontent.com/clarin-eric/oai-harvest-manager/master/src/main/resources/filter.xsl"/> -->
-      <action type="save" dir="err" group-by-provider="true" suffix=".xml"/> 
+ <!-- <action type="save" dir="err" group-by-provider="true" suffix=".xml"/> -->   
+	  <action type="validate-or-recover" dir="err" group-by-provider="true" suffix=".xml.error"/>
       <action type="split"/>
       <action type="strip"/>
       <action type="save" dir="ead" group-by-provider="true" suffix=".xml" find=".*/(repositories/.*)" replace="$1" />
@@ -69,7 +70,7 @@
     <provider url="https://archives.library.vcu.edu/oai" name="VCU" /> 
     <provider url="https://aspace.lib.vt.edu:8082" name="VT" />  
     <provider url="https://aspace.lib.jmu.edu/oai" name="JMU" />  
-    <provider url="http://alexlibraryva.libraryhost.com:8082" name="ALEX" />  
+    <provider url="http://alexlibraryva-oai.libraryhost.com/" name="ALEX" />
     <provider url="https://archives.mountvernon.org/oai" name="MV" />  
     <provider url="https://aspace.umw.edu/oai" name="MW" />  
     <provider url="https://aspace.gmu.edu/oai" name="GMU" />
