@@ -91,7 +91,7 @@ public class OAIFactory {
                     | ParserConfigurationException
                     | SAXException
                     | TransformerException e) {
-                if (! ( e instanceof SocketTimeoutException)) 
+                if ((! ( e instanceof SocketTimeoutException) && (!(e instanceof IOException)) )) 
                 {
                     e.printStackTrace();
                 }

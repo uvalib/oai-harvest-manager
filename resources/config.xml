@@ -46,6 +46,8 @@
          number of files. -->
     <dir path="error" id="err" max-files="0"/>
     <dir path="ead" id="ead" max-files="0"/>
+    <dir path="results/cmdi-1_1" id="cmdi-1_1" max-files="0"/>
+    <dir path="results/cmdi" id="cmdi-1_2" max-files="0"/>
   </directories>
   
   
@@ -74,7 +76,7 @@
     <provider url="https://archives.mountvernon.org/oai" name="MV" />  
     <provider url="https://aspace.umw.edu/oai" name="MW" />  
     <provider url="https://aspace.gmu.edu/oai" name="GMU" />
-    <provider url="https://archives-oai.lib.virginia.edu" name="UVA" timeout="180" /> 
+    <provider url="https://archives-oai.lib.virginia.edu" name="UVA" timeout="60" recordtimeout="600" /> 
     <provider url="https://archives.longwood.edu/oai" name="LONG" /> 
     <provider url="https://archives.richmond.edu/oai" name="RICH" />  
     <provider url="https://archives.lib.wvu.edu/oai" name="WVU" timeout="180" >

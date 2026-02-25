@@ -290,13 +290,19 @@ public class IdentifierListHarvesting extends ListHarvesting
                     return (new String("already exists"));
                 }
             }
-            System.out.println(this.provider.getName() + " : " + pathToFile.getFileName());
         }
         catch (IOException ioe) {
             throw ioe;
         }
-        
-        return parseResponse();
+        long start = System.nanoTime();
+        try {
+            return parseResponse();
+        } finally {
+            long durationNs = System.nanoTime() - start;
+            double durationMs = durationNs / 1_000_000.0;
+
+            System.out.println(this.provider.getName() + " : " + pathToFile.getFileName() + " took " + String.format("%.2f", durationMs) + " ms");
+        }
     }
     
     public Object parseResponseIfNewer(ActionSequence actions) throws IOException {

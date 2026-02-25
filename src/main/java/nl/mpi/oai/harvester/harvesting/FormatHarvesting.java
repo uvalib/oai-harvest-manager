@@ -113,7 +113,7 @@ public class FormatHarvesting extends AbstractHarvesting implements
                     | NoSuchFieldException e) {
                 // report
                 logger.error("FormatHarvesting["+this+"]["+provider+"] request try["+(i+1)+"/"+provider.maxRetryCount+"] failed!");
-                logger.error(e.getMessage(), e);
+                logger.error(e.getMessage());
             }
 
             if (document == null){

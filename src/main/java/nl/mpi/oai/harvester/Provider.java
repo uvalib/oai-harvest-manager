@@ -84,6 +84,9 @@ public class Provider {
     /** Maximum timeout for a connection */
     public int timeout = 0;
     
+    /** Maximum timeout for a reading a record  */
+    public int recordTimeout = 0;
+    
     /** Do I need some time on my own? */
     public boolean exclusive = false;
     
@@ -253,7 +256,7 @@ public class Provider {
             return parseProviderName(ident.getDocument());
         } catch (IOException | ParserConfigurationException | SAXException
                     | TransformerException e) {
-            logger.error(e.getMessage(), e);
+            logger.error(this.getName() + " : " + e.getMessage());
         }
         return null;
     }
@@ -264,7 +267,7 @@ public class Provider {
             return parseDeletionMode(ident.getDocument());
         } catch (IOException | ParserConfigurationException | SAXException
                 | TransformerException e) {
-            logger.error(e.getMessage(), e);
+            logger.error(this.getName() + " : " + e.getMessage());
         }
         return null;
     }
@@ -327,6 +330,14 @@ public class Provider {
     
     public int getTimeout() {
         return this.timeout;
+    }
+
+    public void setRecordTimeout(int timeout) {
+        this.recordTimeout = timeout;
+    }
+    
+    public int getRecordTimeout() {
+        return this.recordTimeout;
     }
 
     public void setMaxRetryCount(int maxRetryCount) {
@@ -419,7 +430,7 @@ public class Provider {
 	public Metadata getRecord(String id, String mdPrefix) {
 	for (int i=0; i<maxRetryCount; i++) {
 	    try {
-		GetRecord gr = new GetRecord(oaiUrl, id, mdPrefix, timeout);
+		GetRecord gr = new GetRecord(oaiUrl, id, mdPrefix, recordTimeout);
                 return new Metadata(id, mdPrefix, gr.getDocumentSource(), this, true, false);
 	    } catch (IOException | SAXException | ParserConfigurationException
 		    | TransformerException e) {

@@ -57,6 +57,10 @@
             <AppenderRef ref="RoutingAppender"/>
         </Logger>
 
+		<Logger name="edu.virginia.lib.oai" level="INFO" additivity="false">
+    		<AppenderRef ref="RoutingAppender"/>
+		</Logger>
+		
         <Root level="INFO">
             <AppenderRef ref="fileWriter"/>
         </Root>

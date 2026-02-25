@@ -63,6 +63,7 @@ public class ValidateOrRecoverAction implements Action {
                 }
 
                 logger.warn("Validation failed for record [{}]", id);
+                System.out.println("Validation failed for record "+id);
 
                 List<String> errorMessages = new ArrayList<>(validationErrors);
                 String recoveredXml = null;
@@ -80,12 +81,16 @@ public class ValidateOrRecoverAction implements Action {
 
                     if (recoveredXml != null) {
                         logger.info("Recovery succeeded for [{}]", id);
+                        System.out.println("Recovery succeeded for "+id);
                     } else {
                         logger.error("Recovery failed for [{}]", id);
+                        System.out.println("Recovery failed for "+id);
+
                     }
 
                 } else {
                     logger.error("libxml2 not available - cannot recover [{}]", id);
+                    System.out.println("libxml2 not available - cannot recover "+id);
                 }
 
                 // Write diagnostic output using OutputDirectory
@@ -109,11 +114,12 @@ public class ValidateOrRecoverAction implements Action {
 
                 } else {
                     logger.warn("Dropping unrecoverable record [{}]", id);
+                    System.out.println("Dropping unrecoverable record "+id);                   
                 }
 
             } catch (Exception ex) {
-                logger.error("Fatal error processing [{}]",
-                        record.getId(), ex);
+                logger.error("Fatal error processing [{}]", record.getId(), ex);
+                System.err.println("Fatal error processing "+ record.getId());                   
             }
         }
 

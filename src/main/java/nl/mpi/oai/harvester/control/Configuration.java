@@ -456,17 +456,19 @@ public class Configuration {
                                 Node configNode = configMap.get(provUrl);
                                 String pScenario = Util.getNodeText(xpath, "./@scenario", configNode);
                                 String pTimeout = Util.getNodeText(xpath, "./@timeout", configNode);
+                                String pRecordTimeout = Util.getNodeText(xpath, "./@recordtimeout", configNode);
                                 String pMaxRetryCount = Util.getNodeText(xpath, "./@max-retry-count", configNode);
                                 String pRetryDelays = Util.getNodeText(xpath, "./@retry-delay", configNode);
                                 String pExclusive = Util.getNodeText(xpath, "./@exclusive", configNode);
 
                                 int timeout = (pTimeout != null) ? Integer.valueOf(pTimeout) : getTimeout();
-                                int maxRetryCount = (pMaxRetryCount != null) ? Integer.valueOf(pMaxRetryCount) : getMaxRetryCount();
+                                int recordTimeout = (pRecordTimeout != null) ? Integer.valueOf(pRecordTimeout) : timeout;                                int maxRetryCount = (pMaxRetryCount != null) ? Integer.valueOf(pMaxRetryCount) : getMaxRetryCount();
                                 int[] retryDelays = (pRetryDelays != null) ? parseRetryDelays(pRetryDelays) : getRetryDelays();
                                 boolean exclusive = Boolean.parseBoolean(pExclusive);
                                 String scenario = (pScenario != null) ? pScenario : getScenario();
 
                                 provider.setTimeout(timeout);
+                                provider.setRecordTimeout(recordTimeout);
                                 provider.setMaxRetryCount(maxRetryCount);
                                 provider.setRetryDelays(retryDelays);
                                 provider.setExclusive(exclusive);
@@ -474,6 +476,7 @@ public class Configuration {
                                 provider.setScenario(scenario);
                             } else {
                                 provider.setTimeout(getTimeout());
+                                provider.setRecordTimeout(getTimeout());
                                 provider.setMaxRetryCount(getMaxRetryCount());
                                 provider.setRetryDelays(getRetryDelays());
                                 provider.setExclusive(false);
@@ -527,11 +530,13 @@ public class Configuration {
             String pStatic = Util.getNodeText(xpath, "./@static", cur);
             String pScenario = Util.getNodeText(xpath, "./@scenario", cur);
             String pTimeout = Util.getNodeText(xpath, "./@timeout", cur);
+            String pRecordTimeout = Util.getNodeText(xpath, "./@recordtimeout", cur);
             String pMaxRetryCount = Util.getNodeText(xpath, "./@max-retry-count", cur);
             String pRetryDelays = Util.getNodeText(xpath, "./@retry-delay", cur);
             String pExclusive = Util.getNodeText(xpath, "./@exclusive", cur);
 
             int timeout = (pTimeout != null) ? Integer.valueOf(pTimeout) : getTimeout();
+            int recordTimeout = (pRecordTimeout != null) ? Integer.valueOf(pRecordTimeout) : timeout;
             int maxRetryCount = (pMaxRetryCount != null) ? Integer.valueOf(pMaxRetryCount) : getMaxRetryCount();
             int[] retryDelays = (pRetryDelays != null)?parseRetryDelays(pRetryDelays):getRetryDelays();
             boolean exclusive = Boolean.parseBoolean(pExclusive);
@@ -549,6 +554,7 @@ public class Configuration {
                 provider.setName(pName);
 
             provider.setTimeout(timeout);
+            provider.setRecordTimeout(recordTimeout);
             provider.setExclusive(exclusive);
             provider.setIncremental(isIncremental());
             provider.setScenario(scenario);
