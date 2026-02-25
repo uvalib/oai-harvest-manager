@@ -193,7 +193,8 @@ public interface Endpoint {
      * the date of the most recent successful harvest attempt
      */
     DateTime getHarvestedDate();
-
+    void setHarvestedDate(DateTime ht);
+    
     /**
      * <br> Indicate success or failure <br><br>
      *

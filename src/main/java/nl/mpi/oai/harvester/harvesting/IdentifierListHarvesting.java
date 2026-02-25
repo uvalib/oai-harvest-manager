@@ -276,18 +276,25 @@ public class IdentifierListHarvesting extends ListHarvesting
         
         org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy'-'MM'-'dd'T'HH':'mm':'ssZ");
         DateTime dt = formatter.parseDateTime(pair.datestamp);
+        DateTime ht = this.endpoint.getHarvestedDate();
+        if (dt.isAfter(ht)) {
+            this.endpoint.setHarvestedDate(dt);
+        }
         try { 
-            if (Files.exists(pathToFile, new LinkOption[0]))
+            if (Files.exists(pathToFile)) 
             {
-                BasicFileAttributes attr = Files.readAttributes(pathToFile, BasicFileAttributes.class);
+                BasicFileAttributes attr =  Files.readAttributes(pathToFile, BasicFileAttributes.class);
                 FileTime ft = attr.lastModifiedTime();
-                if (ft.toMillis() > dt.getMillis()) {
+                long localSeconds = ft.toMillis() / 1000;
+                long oaiSeconds   = dt.getMillis() / 1000;
+
+                if (localSeconds - 60 > oaiSeconds) {
                     // Already downloaded file.   
                     // Skip it and be happy
-                    logger.debug("file "+pathToFile.toAbsolutePath().toString()+" already exists and is newer than the one that would be downloaded");
+                    logger.debug("Skipping {} (local >= OAI)", pathToFile.toAbsolutePath());
                     tIndex++;
                     // Ugh.    return a string rather than a Metadata object to signal an expected "failure" 
-                    return (new String("already exists"));
+                    return "already exists";
                 }
             }
         }

@@ -27,6 +27,7 @@ import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import java.math.BigDecimal;
+import java.util.GregorianCalendar;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -250,57 +251,71 @@ class EndpointAdapter implements Endpoint {
     }
 
     @Override
-    public void doneHarvesting(Boolean done) {
+    public void setHarvestedDate(DateTime mostRecentHarvested) {
 
-        /* Store the current date in a XMLGregorianCalendar object. Note: at
-           the XML level, the date will be represented in ISO8601 format.
-         */
-        XMLGregorianCalendar xmlGregorianCalendar;
+        if (mostRecentHarvested == null) {
+            endpointType.setHarvested(null);
+            return;
+        }
 
         try {
-            // get current time in the UTC zone
-            DateTime dateTime = new DateTime (DateTimeZone.UTC);
+            // 1. Normalize to UTC
+            DateTime utc = mostRecentHarvested.withZone(DateTimeZone.UTC);
 
-            // create XML calendar
-            xmlGregorianCalendar =
-                    DatatypeFactory.newInstance().newXMLGregorianCalendar();
+            // 2. Truncate to seconds (OAI granularity!)
+            utc = utc.withMillisOfSecond(0);
 
-            // set the date related fields
-            xmlGregorianCalendar.setDay(dateTime.getDayOfMonth());
-            xmlGregorianCalendar.setMonth(dateTime.getMonthOfYear());
-            xmlGregorianCalendar.setYear(dateTime.getYear());
+            // 3. Convert to GregorianCalendar
+            GregorianCalendar cal = utc.toGregorianCalendar();
 
-            // set the calendar to UTC, this zone sets off 0 minutes from UTC
-            xmlGregorianCalendar.setTimezone(0);
+            // 4. Convert to XMLGregorianCalendar
+            XMLGregorianCalendar xmlCal =
+                    DatatypeFactory.newInstance()
+                                   .newXMLGregorianCalendar(cal);
 
-            // set the time related fields
-            xmlGregorianCalendar.setHour(dateTime.getHourOfDay());
-            xmlGregorianCalendar.setMinute(dateTime.getMinuteOfHour());
-            xmlGregorianCalendar.setSecond(dateTime.getSecondOfMinute());
+            // 5. Store
+            endpointType.setHarvested(xmlCal);
 
-            // represent milliseconds as a fraction of a second
-            BigDecimal s = BigDecimal.valueOf(dateTime.getMillisOfSecond());
-            s = s.divide(BigDecimal.valueOf(1000));
+        } catch (DatatypeConfigurationException e) {
+            throw new RuntimeException("Failed to set harvested date", e);
+        }
+    }
+    
+    @Override
+    public void doneHarvesting(Boolean done) {
 
-            xmlGregorianCalendar.setFractionalSecond(s);
+        try {
+            // Always record attempt time
+            DateTime now = new DateTime(DateTimeZone.UTC)
+                                .withMillisOfSecond(0);
 
-            // set the property representing the date of the attempt
-            endpointType.setAttempted(xmlGregorianCalendar);
+            XMLGregorianCalendar attemptedXml =
+                    DatatypeFactory.newInstance()
+                                   .newXMLGregorianCalendar(
+                                       now.toGregorianCalendar());
 
-            if (done) {
-                // successful attempt, also set attribute representing this
-                endpointType.setHarvested(xmlGregorianCalendar);
+            endpointType.setAttempted(attemptedXml);
+
+            if (done && getHarvestedDate() != null) {
+
+                DateTime checkpoint =
+                        getHarvestedDate().withZone(DateTimeZone.UTC).withMillisOfSecond(0);
+
+                XMLGregorianCalendar harvestedXml =
+                        DatatypeFactory.newInstance()
+                                       .newXMLGregorianCalendar(
+                                           checkpoint.toGregorianCalendar());
+
+                endpointType.setHarvested(harvestedXml);
             }
 
             xmlOverview.save();
 
         } catch (DatatypeConfigurationException e) {
-            // report the error, we cannot continue
-            Logger.getLogger(EndpointAdapter.class.getName()).log(
-                    Level.SEVERE, null, endpointType);
+            throw new RuntimeException("Failed updating endpoint dates", e);
         }
     }
-
+    
     @Override
     public long getCount() {
 
