@@ -90,6 +90,13 @@ public class Provider {
     /** Do I need some time on my own? */
     public boolean exclusive = false;
     
+    /** Should I avoid adding the until parameter ? */
+    public boolean omitUntil = false;
+    
+    public String setPrefixOverride = null;
+
+    public String identifierFilter = null;
+
     /** Type of prefix harvesting that applies to the provider */
     public Harvesting prefixHarvesting;
 
@@ -623,4 +630,42 @@ public class Provider {
 	public enum DeletionMode {
 		NO, PERSISTENT, TRANSIENT
 	}
+
+    public void setOmitUntil(boolean omitUntil)
+    {
+        this.omitUntil = omitUntil;
+    }
+    
+    public boolean getOmitUntil()
+    {
+        return (omitUntil);
+    }
+
+    public void setPrefixOverride(String pPrefix)
+    {
+        this.setPrefixOverride = pPrefix;
+    }
+
+    public String getPrefixOverride()
+    {
+        return this.setPrefixOverride;
+    }
+
+    public void setIdentifierFilter(String pFilter)
+    {
+        this.identifierFilter = pFilter;
+    }
+   
+    public String getIdentifierFilter()
+    {
+        return this.identifierFilter;
+    }
+
+    public boolean getIdentifierFilterMatch(String identifier)
+    {
+        if (identifierFilter == null) return true;
+        if (identifier.matches(identifierFilter))  
+            return true;
+        return false;
+    }
 }

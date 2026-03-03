@@ -460,11 +460,13 @@ public class Configuration {
                                 String pMaxRetryCount = Util.getNodeText(xpath, "./@max-retry-count", configNode);
                                 String pRetryDelays = Util.getNodeText(xpath, "./@retry-delay", configNode);
                                 String pExclusive = Util.getNodeText(xpath, "./@exclusive", configNode);
+                                String pOmitUntil = Util.getNodeText(xpath, "./@omit-until", configNode);
 
                                 int timeout = (pTimeout != null) ? Integer.valueOf(pTimeout) : getTimeout();
                                 int recordTimeout = (pRecordTimeout != null) ? Integer.valueOf(pRecordTimeout) : timeout;                                int maxRetryCount = (pMaxRetryCount != null) ? Integer.valueOf(pMaxRetryCount) : getMaxRetryCount();
                                 int[] retryDelays = (pRetryDelays != null) ? parseRetryDelays(pRetryDelays) : getRetryDelays();
                                 boolean exclusive = Boolean.parseBoolean(pExclusive);
+                                boolean omitUntil = Boolean.parseBoolean(pOmitUntil);
                                 String scenario = (pScenario != null) ? pScenario : getScenario();
 
                                 provider.setTimeout(timeout);
@@ -474,6 +476,7 @@ public class Configuration {
                                 provider.setExclusive(exclusive);
                                 provider.setIncremental(isIncremental());
                                 provider.setScenario(scenario);
+                                provider.setOmitUntil(omitUntil);
                             } else {
                                 provider.setTimeout(getTimeout());
                                 provider.setRecordTimeout(getTimeout());
@@ -534,12 +537,16 @@ public class Configuration {
             String pMaxRetryCount = Util.getNodeText(xpath, "./@max-retry-count", cur);
             String pRetryDelays = Util.getNodeText(xpath, "./@retry-delay", cur);
             String pExclusive = Util.getNodeText(xpath, "./@exclusive", cur);
+            String pOmitUntil = Util.getNodeText(xpath, "./@omituntil", cur);
+            String pPrefix = Util.getNodeText(xpath, "./@prefix", cur);
+            String pFilter = Util.getNodeText(xpath, "./@filter", cur);
 
             int timeout = (pTimeout != null) ? Integer.valueOf(pTimeout) : getTimeout();
             int recordTimeout = (pRecordTimeout != null) ? Integer.valueOf(pRecordTimeout) : timeout;
             int maxRetryCount = (pMaxRetryCount != null) ? Integer.valueOf(pMaxRetryCount) : getMaxRetryCount();
             int[] retryDelays = (pRetryDelays != null)?parseRetryDelays(pRetryDelays):getRetryDelays();
             boolean exclusive = Boolean.parseBoolean(pExclusive);
+            boolean omitUntil = Boolean.parseBoolean(pOmitUntil);
             String scenario = (pScenario != null) ?  pScenario : getScenario();
 
             if (pUrl == null) {
@@ -558,7 +565,10 @@ public class Configuration {
             provider.setExclusive(exclusive);
             provider.setIncremental(isIncremental());
             provider.setScenario(scenario);
-
+            provider.setOmitUntil(omitUntil);
+            provider.setPrefixOverride(pPrefix);
+            provider.setIdentifierFilter(pFilter);
+            
             if (!Boolean.valueOf(pStatic)) {
                 // Note: static providers do not support sets, so this only
                 // needs to be done here.

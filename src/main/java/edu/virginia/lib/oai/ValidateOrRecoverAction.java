@@ -62,8 +62,8 @@ public class ValidateOrRecoverAction implements Action {
                     continue;
                 }
 
-                logger.warn("Validation failed for record [{}]", id);
-                System.out.println("Validation failed for record "+id);
+                logger.warn(record.getOrigin().getName() + "Validation failed for record [{}]", id);
+                System.out.println(record.getOrigin().getName() + "Validation failed for record "+id);
 
                 List<String> errorMessages = new ArrayList<>(validationErrors);
                 String recoveredXml = null;

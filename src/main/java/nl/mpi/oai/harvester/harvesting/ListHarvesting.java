@@ -189,6 +189,9 @@ public abstract class ListHarvesting extends AbstractListHarvesting implements
 
         if(incremental && endpoint != null) {
             untilDate = formatter.format(new Date());
+            if (provider.getOmitUntil() == true) {
+                untilDate = null;
+            }
             if (endpoint.getHarvestedDate() != null) {
                 fromDate = formatter.format(endpoint.getHarvestedDate().toDate());
             }
@@ -226,8 +229,8 @@ public abstract class ListHarvesting extends AbstractListHarvesting implements
                     } else {
                         // request targets for a new set and prefix combination
                         document = verb5(provider.oaiUrl, fromDate, untilDate,
-                                provider.sets[sIndex],
-                                prefixes.get(pIndex),
+                                provider.sets[sIndex].replace(" ",  "+"),
+                                (provider.getPrefixOverride() != null) ? provider.getPrefixOverride() : prefixes.get(pIndex),
                                 provider.getTimeout(),
                                 provider.temp);
                     }
@@ -249,7 +252,8 @@ public abstract class ListHarvesting extends AbstractListHarvesting implements
 
                 // report
                 logger.error("ListHarvesting[" + this + "][" + provider + "] request try[" + (i + 1) + "/" + provider.maxRetryCount + "] failed!");
-                logger.error(e.getMessage(), e);
+                System.err.println("Error: " + e.getClass().getName() + " : " + e.getMessage());
+                //logger.error(e.getMessage(), e);
             }
             // tried the request
 

@@ -213,7 +213,8 @@ public class IdentifierListHarvesting extends ListHarvesting
             /* Try to insert the pair in the list. No problem if it is already
                there.
              */
-            targets.checkAndInsertSorted(pair);
+            if (provider.getIdentifierFilter() == null || provider.getIdentifierFilterMatch(identifier))
+                targets.checkAndInsertSorted(pair);
         }
         
         return true;
@@ -306,9 +307,9 @@ public class IdentifierListHarvesting extends ListHarvesting
             return parseResponse();
         } finally {
             long durationNs = System.nanoTime() - start;
-            double durationMs = durationNs / 1_000_000.0;
+            double durationS = durationNs / 1_000_000_000.0;
 
-            System.out.println(this.provider.getName() + " : " + pathToFile.getFileName() + " took " + String.format("%.2f", durationMs) + " ms");
+            System.out.println(this.provider.getName() + " : " + pathToFile.getFileName() + " took " + String.format("%.2f", durationS) + " sec");
         }
     }
     

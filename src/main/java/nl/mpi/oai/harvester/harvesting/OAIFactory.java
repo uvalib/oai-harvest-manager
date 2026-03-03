@@ -292,7 +292,7 @@ public class OAIFactory {
                     | XMLStreamException e) {
                 if (! ( e instanceof SocketTimeoutException)) 
                 {
-                    e.printStackTrace();
+                    System.err.println("Error: " + e.getClass().getName() + " : " + e.getMessage());
                 }
                 throw(e);
             }

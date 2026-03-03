@@ -62,16 +62,17 @@
       <action type="save" dir="ead" group-by-provider="true" suffix=".xml" find=".*/(repositories/.*)" replace="$1" />
     </format>
   </actions>
+
   
   <!-- ### list of providers ### -->
   <providers>
-    <provider url="https://archives.vmfa.museum/oai" name="VMFA" >
-       <filter>.//url[contains(.,'resources/37')]</filter>
+    <provider url="https://archives.vmfa.museum/oai" name="VMFA" prefix="oai_dc" filter=".*/resources/.*">
+       <set>vertical files</set>
     </provider>    
     <provider url="https://as-oai.lib.odu.edu" name="ODU" timeout="30" /> 
     <provider url="https://archives.library.vcu.edu/oai" name="VCU" /> 
     <provider url="https://aspace.lib.vt.edu:8082" name="VT" />  
-    <provider url="https://aspace.lib.jmu.edu/oai" name="JMU" />  
+    <provider url="https://aspace.lib.jmu.edu/oai" name="JMU" timeout="60" recordtimeout="600" />  
     <provider url="http://alexlibraryva-oai.libraryhost.com/" name="ALEX" />
     <provider url="https://archives.mountvernon.org/oai" name="MV" />  
     <provider url="https://aspace.umw.edu/oai" name="MW" />  
@@ -79,9 +80,7 @@
     <provider url="https://archives-oai.lib.virginia.edu" name="UVA" timeout="60" recordtimeout="600" /> 
     <provider url="https://archives.longwood.edu/oai" name="LONG" /> 
     <provider url="https://archives.richmond.edu/oai" name="RICH" />  
-    <provider url="https://archives.lib.wvu.edu/oai" name="WVU" timeout="180" >
-       <filter>.//url[contains(.,'resources/1')]</filter>
-    </provider>
+    <provider url="https://archives.lib.wvu.edu/oai" name="WVU" timeout="60" recordtimeout="180" omituntil="true" />
     <provider url="http://archivespace.hsc.edu:8082" name="HSC" />
     <provider url="https://wluoai.as.atlas-sys.com/oai" name="WLU" /> 
   </providers>
