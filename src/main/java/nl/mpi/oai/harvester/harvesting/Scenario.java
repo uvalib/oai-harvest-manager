@@ -115,7 +115,8 @@ public class Scenario {
     public boolean listIdentifiers(AbstractHarvesting harvesting) {
 
         DocumentSource identifiers;
-        System.out.println(harvesting.provider.getName() +" : Starting listIdentifiers");
+        System.out.println(harvesting.provider.getName() +" : Starting listIdentifiers in "+(harvesting.provider.incremental ? "incremental mode" : "non-incremental mode"));
+        long listStart = System.nanoTime();
         for (;;) {
             try {
 
@@ -156,8 +157,18 @@ public class Scenario {
         }
         if (harvesting instanceof IdentifierListHarvesting) 
         { 
+            long listEnd = System.nanoTime();
+            double totalElapsedTime = (( listEnd - listStart )/ 1_000_000);
+            String elapsed;
+            if (totalElapsedTime < 1000.0) 
+                elapsed = String.format("%.2f", totalElapsedTime) + " ms";
+            else if (totalElapsedTime < 120000.0) 
+                elapsed = String.format("%.2f", totalElapsedTime / 1000.0) + " sec";
+            else
+                elapsed = String.format("%.2f", totalElapsedTime/60000.0) + " min";
+
             IdentifierListHarvesting iharvesting = (IdentifierListHarvesting)harvesting;
-            System.out.println(harvesting.provider.getName() +" : Received "+ iharvesting.targets.size() + " identifiers to harvest");
+            System.out.println(harvesting.provider.getName() +" : Received "+ iharvesting.targets.size() + " identifiers to harvest in " + elapsed );
         }
         int num_harvested = 0;
         int num_skipped = 0;
