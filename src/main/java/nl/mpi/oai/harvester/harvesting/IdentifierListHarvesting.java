@@ -278,11 +278,27 @@ public class IdentifierListHarvesting extends ListHarvesting
         // the targets are in place and tIndex points to an element in the list
         IdPrefix pair = targets.get(tIndex);
         
-        boolean retryError = Files.exists(pathToErrorFile);
+        boolean retryError = false;
+
+        if (Files.exists(pathToErrorFile)) {
+            try {
+                FileTime errorTime = Files.getLastModifiedTime(pathToErrorFile);
+                long ageMillis = System.currentTimeMillis() - errorTime.toMillis();
+
+                long oneDayMillis = 24L * 60L * 60L * 1000L;
+
+                if (ageMillis > oneDayMillis) {
+                    retryError = true;
+                    logger.info("Retrying previously failed record {} (error file older than 1 day)", pair.identifier);
+                } else {
+                    logger.debug("Skipping forced retry for {} (error file too recent)", pair.identifier);
+                }
+
+            } catch (IOException e) {
+                logger.warn("Unable to read error file timestamp for {}", pair.identifier, e);
+            }
+        } 
         
-        if (retryError) {
-            logger.info("Retrying previously failed record {}", pair.identifier);
-        }
         org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy'-'MM'-'dd'T'HH':'mm':'ssZ");
         DateTime dt = formatter.parseDateTime(pair.datestamp);
         DateTime ht = this.endpoint.getHarvestedDate();
