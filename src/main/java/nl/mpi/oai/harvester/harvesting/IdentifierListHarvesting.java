@@ -34,6 +34,8 @@ import org.joda.time.format.DateTimeFormat;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import edu.virginia.lib.oai.ValidateOrRecoverAction;
+
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.TransformerException;
@@ -44,6 +46,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.text.DateFormat;
@@ -262,7 +265,7 @@ public class IdentifierListHarvesting extends ListHarvesting
         }
     }
     
-    public Object parseResponseIfNewer(Path pathToFile) throws IOException {
+    public Object parseResponseIfNewer(Path pathToFile, Path pathToErrorFile) throws IOException {
         
         // check for protocol errors
         if (targets == null){
@@ -275,6 +278,11 @@ public class IdentifierListHarvesting extends ListHarvesting
         // the targets are in place and tIndex points to an element in the list
         IdPrefix pair = targets.get(tIndex);
         
+        boolean retryError = Files.exists(pathToErrorFile);
+        
+        if (retryError) {
+            logger.info("Retrying previously failed record {}", pair.identifier);
+        }
         org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy'-'MM'-'dd'T'HH':'mm':'ssZ");
         DateTime dt = formatter.parseDateTime(pair.datestamp);
         DateTime ht = this.endpoint.getHarvestedDate();
@@ -282,7 +290,7 @@ public class IdentifierListHarvesting extends ListHarvesting
             this.endpoint.setHarvestedDate(dt);
         }
         try { 
-            if (Files.exists(pathToFile)) 
+            if (!retryError && Files.exists(pathToFile))
             {
                 BasicFileAttributes attr =  Files.readAttributes(pathToFile, BasicFileAttributes.class);
                 FileTime ft = attr.lastModifiedTime();
@@ -331,7 +339,12 @@ public class IdentifierListHarvesting extends ListHarvesting
         Path pathToFile = saveAction.chooseLocation(this.provider.getName(), pair.identifier);
         firstSaveAction.release(saveAction);
         
-        return (parseResponseIfNewer(pathToFile));
+        ResourcePool<Action> validateOrRecoverAction = Scenario.getValidateOrRecoverAction(actions);
+        ValidateOrRecoverAction recoverAction = ((ValidateOrRecoverAction)validateOrRecoverAction.get());
+        Path pathToErrorFile = recoverAction.chooseLocation(this.provider.getName(), pair.identifier);
+        validateOrRecoverAction.release(recoverAction);
+        
+        return (parseResponseIfNewer(pathToFile, pathToErrorFile));
     }
 
 }

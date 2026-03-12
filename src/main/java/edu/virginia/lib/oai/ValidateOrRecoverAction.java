@@ -58,10 +58,24 @@ public class ValidateOrRecoverAction implements Action {
                 boolean isValid = validate(originalXml, validationErrors);
 
                 if (isValid) {
+                    // If this record previously failed, remove its error file
+                    try {
+                        Path errorPath = chooseLocation(record);
+
+                        if (Files.exists(errorPath)) {
+                            Files.delete(errorPath);
+                            logger.info("Removed error file for recovered record [{}]", id);
+                            System.out.println("Removed error file for recovered record " + id);
+                        }
+
+                    } catch (Exception cleanupEx) {
+                        logger.warn("Could not remove error file for [{}]", id, cleanupEx);
+                    }
+
                     newRecords.add(record);
                     continue;
                 }
-
+                
                 logger.warn(record.getOrigin().getName() + "Validation failed for record [{}]", id);
                 System.out.println(record.getOrigin().getName() + "Validation failed for record "+id);
 
@@ -132,20 +146,29 @@ public class ValidateOrRecoverAction implements Action {
        OutputDirectory Integration (SaveAction pattern)
        -------------------------------------------------- */
 
-    protected Path chooseLocation(Metadata metadata) throws IOException {
+    public Path chooseLocation(Metadata metadata) throws IOException {
 
         if (groupByProvider) {
             Provider prov = metadata.getOrigin();
-            OutputDirectory provDir =
-                    dir.makeSubdirectory(
-                            Util.toFileFormat(prov.getName()));
-            return provDir.placeNewFile(
-                    Util.toFileFormat(metadata.getId(), suffix));
+            return chooseLocation(prov.getName(), metadata.getId());
         }
 
-        return dir.placeNewFile(
-                Util.toFileFormat(metadata.getId(), suffix));
+        return chooseLocation(null, metadata.getId());
     }
+    
+    public Path chooseLocation(String provName, String id) throws IOException {
+        if (provName != null) {
+            OutputDirectory provDir = dir.makeSubdirectory(Util.toFileFormat(provName));
+            return provDir.placeNewFile(Util.toFileFormat(mapIdtoFilename(id), suffix));
+        }
+        return(dir.placeNewFile(Util.toFileFormat(mapIdtoFilename(id), suffix)));
+    }
+
+    protected String mapIdtoFilename(String id)
+    {
+        return(id);
+    }
+
 
     /* --------------------------------------------------
        Diagnostic File Writing

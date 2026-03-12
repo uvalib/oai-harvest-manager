@@ -28,6 +28,8 @@ import nl.mpi.oai.harvester.utils.DocumentSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import edu.virginia.lib.oai.ValidateOrRecoverAction;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -262,6 +264,22 @@ public class Scenario {
         {
             Action act = actpool.get();
             if (act instanceof SaveAction && !((SaveAction)act).getOutputDirectory().toString().endsWith("error"))
+            {
+                result = actpool;
+            }
+            actpool.release(act);
+            if (result != null)  break;
+        }
+        return(result);
+    }
+
+    public static ResourcePool<Action> getValidateOrRecoverAction(ActionSequence actions)
+    {
+        ResourcePool<Action> result = null;
+        for (ResourcePool<Action> actpool : actions.getActions())
+        {
+            Action act = actpool.get();
+            if (act instanceof ValidateOrRecoverAction )
             {
                 result = actpool;
             }
