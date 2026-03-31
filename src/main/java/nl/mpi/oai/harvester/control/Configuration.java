@@ -104,7 +104,10 @@ public class Configuration {
         RETRYDELAY("retry-delay"), MAXJOBS("max-jobs"),
         POOLSIZE("resource-pool-size"), TIMEOUT("timeout"),
         OVERVIEWFILE("overview-file"), MAPFILE("map-file"),
-        SAVERESPONSE("save-response"), SCENARIO("scenario"), INCREMENTAL("incremental"), DRYRUN("dry-run");
+        SAVERESPONSE("save-response"), SCENARIO("scenario"),
+        INCREMENTAL("incremental"), DRYRUN("dry-run"),
+        COMPARE_MODE("compare-mode");   // <-- ADD THIS
+        
         private final String val;
 
         KnownOptions(final String s) {
@@ -115,7 +118,14 @@ public class Configuration {
             return val;
         }
     }
-
+ 
+    /**
+     * List of names of known configuration options.
+     */
+    public enum CompareSkipVals {
+        COMPARE, IGNORE, SKIP;  
+    };
+        
     /**
      * Map file
      */
@@ -475,6 +485,7 @@ public class Configuration {
                                 provider.setRetryDelays(retryDelays);
                                 provider.setExclusive(exclusive);
                                 provider.setIncremental(isIncremental());
+                                provider.setCompareMode(getCompareMode());
                                 provider.setScenario(scenario);
                                 provider.setOmitUntil(omitUntil);
                             } else {
@@ -484,6 +495,7 @@ public class Configuration {
                                 provider.setRetryDelays(getRetryDelays());
                                 provider.setExclusive(false);
                                 provider.setIncremental(isIncremental());
+                                provider.setCompareMode(getCompareMode());
                                 provider.setScenario(getScenario());
                             }
                             
@@ -564,6 +576,7 @@ public class Configuration {
             provider.setRecordTimeout(recordTimeout);
             provider.setExclusive(exclusive);
             provider.setIncremental(isIncremental());
+            provider.setCompareMode(getCompareMode());
             provider.setScenario(scenario);
             provider.setOmitUntil(omitUntil);
             provider.setPrefixOverride(pPrefix);
@@ -755,6 +768,19 @@ public class Configuration {
 //        if (r)
 //            logger.warn("Incremental harvesting cannot be enabled ... needs to be finished!");
         return r;
+    }
+    
+    /**
+     * Compare mode:
+     * false = skip if local file is newer (default behavior)
+     * true  = compare content, overwrite if different, warn
+     */
+    public CompareSkipVals getCompareMode() {
+        String s = settings.get(KnownOptions.COMPARE_MODE.toString());
+        if (s != null && s.equals("compare"))     return(CompareSkipVals.COMPARE);
+        if (s != null && s.equals("skip"))        return(CompareSkipVals.SKIP);
+        if (s != null && s.equals("ignore"))      return(CompareSkipVals.IGNORE);
+        return(CompareSkipVals.IGNORE);
     }
     
     /**

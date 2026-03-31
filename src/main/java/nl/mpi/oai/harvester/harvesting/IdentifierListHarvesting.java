@@ -23,6 +23,7 @@ import nl.mpi.oai.harvester.Provider;
 import nl.mpi.oai.harvester.action.Action;
 import nl.mpi.oai.harvester.action.ActionSequence;
 import nl.mpi.oai.harvester.action.SaveAction;
+import nl.mpi.oai.harvester.control.Configuration.CompareSkipVals;
 import nl.mpi.oai.harvester.control.ResourcePool;
 import nl.mpi.oai.harvester.cycle.Endpoint;
 import nl.mpi.oai.harvester.metadata.MetadataFactory;
@@ -266,7 +267,7 @@ public class IdentifierListHarvesting extends ListHarvesting
     }
     
     public Object parseResponseIfNewer(Path pathToFile, Path pathToErrorFile) throws IOException {
-        
+
         // check for protocol errors
         if (targets == null){
             throw new HarvestingException();
@@ -275,21 +276,20 @@ public class IdentifierListHarvesting extends ListHarvesting
             throw new HarvestingException();
         }
 
-        // the targets are in place and tIndex points to an element in the list
         IdPrefix pair = targets.get(tIndex);
-        
+
         boolean retryError = false;
 
         if (Files.exists(pathToErrorFile)) {
             try {
                 FileTime errorTime = Files.getLastModifiedTime(pathToErrorFile);
                 long ageMillis = System.currentTimeMillis() - errorTime.toMillis();
-
                 long oneDayMillis = 24L * 60L * 60L * 1000L;
 
                 if (ageMillis > oneDayMillis) {
                     retryError = true;
                     logger.info("Retrying previously failed record {} (error file older than 1 day)", pair.identifier);
+                    System.out.println("Retrying previously failed record "+pair.identifier+" (error file older than 1 day)");
                 } else {
                     logger.debug("Skipping forced retry for {} (error file too recent)", pair.identifier);
                 }
@@ -297,44 +297,127 @@ public class IdentifierListHarvesting extends ListHarvesting
             } catch (IOException e) {
                 logger.warn("Unable to read error file timestamp for {}", pair.identifier, e);
             }
-        } 
-        
-        org.joda.time.format.DateTimeFormatter formatter = DateTimeFormat.forPattern("yyyy'-'MM'-'dd'T'HH':'mm':'ssZ");
+        }
+
+        org.joda.time.format.DateTimeFormatter formatter =
+            DateTimeFormat.forPattern("yyyy'-'MM'-'dd'T'HH':'mm':'ssZ");
+
         DateTime dt = formatter.parseDateTime(pair.datestamp);
         DateTime ht = this.endpoint.getHarvestedDate();
+
         if (dt.isAfter(ht)) {
             this.endpoint.setHarvestedDate(dt);
         }
-        try { 
-            if (!retryError && Files.exists(pathToFile))
-            {
-                BasicFileAttributes attr =  Files.readAttributes(pathToFile, BasicFileAttributes.class);
+
+        CompareSkipVals compareMode = this.provider.isCompareMode();
+        boolean localNewer = false;
+
+        try {
+            if (!retryError && Files.exists(pathToFile)) {
+                BasicFileAttributes attr = Files.readAttributes(pathToFile, BasicFileAttributes.class);
                 FileTime ft = attr.lastModifiedTime();
+
                 long localSeconds = ft.toMillis() / 1000;
                 long oaiSeconds   = dt.getMillis() / 1000;
 
                 if (localSeconds - 60 > oaiSeconds) {
-                    // Already downloaded file.   
-                    // Skip it and be happy
-                    logger.debug("Skipping {} (local >= OAI)", pathToFile.toAbsolutePath());
-                    tIndex++;
-                    // Ugh.    return a string rather than a Metadata object to signal an expected "failure" 
-                    return "already exists";
+                    localNewer = true;
+
+                    if (compareMode == CompareSkipVals.SKIP) {
+                        logger.debug("Skipping {} (local >= OAI)", pathToFile.toAbsolutePath());
+                        tIndex++;
+                        return "already exists";
+                    } 
+                    else if (compareMode == CompareSkipVals.COMPARE) {
+                        logger.warn("Local newer than OAI for {}, will compare content", pair.identifier);
+                        System.out.println("Local newer than OAI for "+pair.identifier+", will compare content");
+                    }
+                    else {
+                        // IGNORE MODE -- do mothing
+                    }
                 }
             }
-        }
-        catch (IOException ioe) {
+        } catch (IOException ioe) {
             throw ioe;
         }
+
+        byte[] existingBytes = null;
+
+        if (compareMode == CompareSkipVals.COMPARE && localNewer && Files.exists(pathToFile)) {
+            existingBytes = Files.readAllBytes(pathToFile);
+        }
+
         long start = System.nanoTime();
+
+        Object result;
         try {
-            return parseResponse();
+            result = parseResponse();   // this writes the file via SaveAction
         } finally {
             long durationNs = System.nanoTime() - start;
             double durationS = durationNs / 1_000_000_000.0;
-
-            System.out.println(this.provider.getName() + " : " + pathToFile.getFileName() + " took " + String.format("%.2f", durationS) + " sec");
+            System.out.println(this.provider.getName() + " : " +
+                pathToFile.getFileName() + " took " +
+                String.format("%.2f", durationS) + " sec");
         }
+
+        // ---- POST-FETCH COMPARISON ----
+        if (compareMode == CompareSkipVals.COMPARE && localNewer && existingBytes != null && Files.exists(pathToFile)) {
+
+            byte[] newBytes = Files.readAllBytes(pathToFile);
+
+            if (contentEquals(existingBytes, newBytes)) {
+                // identical -> restore original (avoid unnecessary update)
+                Files.write(pathToFile, existingBytes);
+                logger.debug("No change detected for {}, keeping existing file", pair.identifier);
+            } else {
+                logger.warn("Content differs for {} even though local file was newer -> overwriting with harvested version",
+                        pair.identifier);
+                System.out.println("Content differs for "+pair.identifier+" even though local file was newer -> overwriting with harvested version");
+            }
+        }
+
+        return result;
+    }
+    
+    private boolean contentEquals(byte[] a, byte[] b) {
+        if (java.util.Arrays.equals(a, b)) {
+            return true;
+        }
+
+        try {
+            return normalizeXml(a).equals(normalizeXml(b));
+        } catch (Exception e) {
+            logger.warn("XML normalization failed, falling back to byte compare", e);
+            return false;
+        }
+    }
+    
+    private String normalizeXml(byte[] data) throws Exception {
+
+        javax.xml.parsers.DocumentBuilderFactory dbf = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        dbf.setNamespaceAware(true);
+        dbf.setIgnoringComments(true);
+        dbf.setCoalescing(true);
+
+        // IMPORTANT: ignore whitespace
+        dbf.setIgnoringElementContentWhitespace(true);
+
+        javax.xml.parsers.DocumentBuilder db = dbf.newDocumentBuilder();
+        org.w3c.dom.Document doc = db.parse(new java.io.ByteArrayInputStream(data));
+
+        doc.normalizeDocument();
+
+        javax.xml.transform.TransformerFactory tf = javax.xml.transform.TransformerFactory.newInstance();
+        javax.xml.transform.Transformer transformer = tf.newTransformer();
+
+        transformer.setOutputProperty(javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
+        transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "no");
+
+        java.io.StringWriter writer = new java.io.StringWriter();
+        transformer.transform(new javax.xml.transform.dom.DOMSource(doc),
+                              new javax.xml.transform.stream.StreamResult(writer));
+
+        return writer.toString().replaceAll(">\\s+<", "><").trim();
     }
     
     public Object parseResponseIfNewer(ActionSequence actions) throws IOException {

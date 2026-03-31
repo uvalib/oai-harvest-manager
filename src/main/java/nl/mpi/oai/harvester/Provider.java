@@ -24,6 +24,8 @@ import ORG.oclc.oai.harvester2.verb.ListIdentifiers;
 import ORG.oclc.oai.harvester2.verb.ListMetadataFormats;
 import nl.mpi.oai.harvester.action.ActionSequence;
 import nl.mpi.oai.harvester.control.Util;
+import nl.mpi.oai.harvester.control.Configuration.CompareSkipVals;
+import nl.mpi.oai.harvester.control.Configuration.KnownOptions;
 import nl.mpi.oai.harvester.harvesting.Harvesting;
 import nl.mpi.oai.harvester.metadata.Metadata;
 import nl.mpi.oai.harvester.metadata.MetadataFormat;
@@ -65,6 +67,9 @@ public class Provider {
 
     /** Incremental used for this provider. */
     public boolean incremental;
+
+    /** Whether to compare new Documents to the already present one or simply skip downloading. */
+    public CompareSkipVals compareOrSkip;
 
     /** Address through which the OAI repository is accessed. */
     public final String oaiUrl;
@@ -330,6 +335,19 @@ public class Provider {
     public boolean getIncremental() {
         return this.incremental;
     }
+    
+    /**
+     * Compare mode:
+     * false = skip if local file is newer (default behavior)
+     * true  = compare content, overwrite if different, warn
+     */
+    public CompareSkipVals isCompareMode() { 
+        return this.compareOrSkip;
+    }
+    
+    public void setCompareMode(CompareSkipVals compare) {
+        this.compareOrSkip = compare;
+    }  
 
     public void setTimeout(int timeout) {
         this.timeout = timeout;

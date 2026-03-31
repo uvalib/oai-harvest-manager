@@ -32,6 +32,15 @@
     is not fulfilled, this setting has no effect.-->
     <incremental>true</incremental>
     
+    <!-- This parameter has two values "compare" and "skip"  The control what happens
+    in IdentifierListHarvesting if the file that would be produced by saving the record 
+    for an identifier already exists, and is newer than the date returned in the 
+    listIdentifiers response   "compare" says, download the record via getRecord and 
+    compare it contents to the file on the disk.  "skip" says to skip downloading the record
+    via getRecord which is much faster.  If no value is provided or the string is not equal to
+    "compare" the value "compare" will be used as the default. -->
+    <compare-mode>skip</compare-mode>
+    
     <!-- Scenario to use:
          - ListRecords will retrieve batches of records from the providers, the batch size is determined by the provider
          - ListIdentifiers will first retrieve all record identifiers and then retrieve records one by one
